@@ -14,3 +14,4 @@ SpaceSweep 是 Windows 存储检查与清理 skill。日常清理默认覆盖所
 - [清理边界](docs/boundaries.md)定义范围、数据保护、权限及执行复核。
 - [首版设计](docs/design.md)定义职责、扫描流程、接口、报告和验收。
 - [规则与应用覆盖](docs/application-rules.md)记录候选类型、规则证据和应用覆盖路线。
+- [使用说明](docs/usage.md)提供已实现命令和 skill 入口。
