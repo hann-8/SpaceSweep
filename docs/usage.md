@@ -38,3 +38,17 @@
 - 扫描的 `matching_logical_bytes` 是匹配规则的文件长度。通过当前执行前置条件的数量为 `eligible_files`。Chrome 正在运行时仍可看到占用和阻塞原因。
 - 预览的 `allocated_bytes` 用于估算影响。系统条目、个人资料和待应用内处理项有各自的边界。
 - 执行后优先看 `deleted_files`、`outcomes`、各盘的 `available_change_bytes` 和本机 `receipt_file`。卷净变化包括同期的系统活动。 [卷容量接口](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdiskfreespaceexw)
+
+## 本地可视化报告
+
+把命令的 JSON 标准输出保存为本地文件。下面的示例使用已存在的报告目录。多份目录分析通过 `-AnalysisJson` 数组传入。计划和执行输入分别使用 `plan` 和 `apply` 的标准输出 JSON。
+
+```powershell
+.\target\release\spacesweep.exe scan | Set-Content .spacesweep-state\scan.json -Encoding UTF8
+.\target\release\spacesweep.exe scan --path 'D:\' --max-seconds 20 |
+    Set-Content .spacesweep-state\disk-D.json -Encoding UTF8
+.\scripts\report.ps1 -ScanJson .spacesweep-state\scan.json `
+    -AnalysisJson .spacesweep-state\disk-D.json -OutputPath .spacesweep-state\report.html
+```
+
+可选的 `-PlanJson` 和 `-ApplyJson` 会显示清理估算、各盘实际变化和处理结果。HTML 可直接用浏览器打开，支持展开目录、最大文件和覆盖信息。输出使用新文件名。
