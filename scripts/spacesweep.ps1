@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('Scan', 'Analyze', 'Plan', 'Apply')]
+    [ValidateSet('Scan', 'Analyze', 'Review', 'Plan', 'Apply')]
     [string]$Step,
     [string]$SessionDir,
     [string[]]$Arguments = @()
@@ -34,6 +34,26 @@ else {
     }
 }
 
+function Get-AnalysisSources {
+    Get-ChildItem -LiteralPath $SessionDir -Filter 'analysis-*.json' -File |
+        Sort-Object LastWriteTimeUtc, Name |
+        Select-Object -ExpandProperty FullName
+}
+
+if ($Step -eq 'Review') {
+    $manifest = Join-Path $SessionDir "review-$token.json"
+    $reportArgs = @{
+        ScanJson = Join-Path $SessionDir 'scan-output.json'
+        AnalysisJson = @(Get-AnalysisSources)
+        SelectionManifest = $manifest
+        OutputPath = Join-Path $SessionDir "report-review-$token.html"
+    }
+    $report = & (Join-Path $PSScriptRoot 'report.ps1') @reportArgs
+    & $engine --state-dir $SessionDir review --report $report --manifest $manifest @Arguments
+    if ($LASTEXITCODE -ne 0) { throw "SpaceSweep review failed (exit $LASTEXITCODE)." }
+    return
+}
+
 if ($Step -eq 'Apply' -and ($Arguments.Count -ne 1 -or $Arguments[0] -cnotmatch '^[0-9a-f]{64}$')) {
     throw 'Apply requires the ID of one confirmed plan.'
 }
@@ -58,11 +78,7 @@ try {
 
     $reportArgs = @{
         ScanJson = Join-Path $SessionDir 'scan-output.json'
-        AnalysisJson = @(
-            Get-ChildItem -LiteralPath $SessionDir -Filter 'analysis-*.json' -File |
-                Sort-Object LastWriteTimeUtc, Name |
-                Select-Object -ExpandProperty FullName
-        )
+        AnalysisJson = @(Get-AnalysisSources)
         OutputPath = Join-Path $SessionDir "report-$stepName-$token.html"
     }
     if ($Step -eq 'Plan') {

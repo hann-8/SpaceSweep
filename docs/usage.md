@@ -55,6 +55,16 @@
 
 黄色审核先按软件或系统归属展示，再显示可独立决定的清理项。同一功能中有不同用途时，可以展开按子项选择，例如网页资源与脚本缓存。每项说明用途、清理影响和当前可进预览的数量，多个目录的合计大小放在同一项下。想核对时展开位置和依据。可直接告诉 Agent「处理内置网页缓存，保留脚本缓存」。预览和执行阶段分别加上本轮计划和复测数据。
 
+### 在报告里勾选
+
+Agent 在本轮扫描会话打开一次性本机审核页，并把链接发到当前对话。打开链接，勾选黄、绿两类的整组或单项，再点「提交勾选」。组复选框会显示全选或部分选择。Agent 收到后按黄色选择生成可用的清理预览，并复核所选绿色线索。页面默认有效 15 分钟，提交后关闭。
+
+```powershell
+.\scripts\spacesweep.ps1 Review -SessionDir $scan.session_dir
+```
+
+这个命令先输出含 `url` 的 `waiting` 事件。提交后输出 `submitted` 事件及 `selection_file`、`scan_ids`、`include_groups`。选择记录留在本轮会话。需要继续选择时可再次打开审核页。
+
 ```powershell
 $scan = .\scripts\spacesweep.ps1 Scan -Arguments @('--discover') | ConvertFrom-Json
 $analysis = .\scripts\spacesweep.ps1 Analyze -SessionDir $scan.session_dir `

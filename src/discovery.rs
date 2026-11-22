@@ -3,7 +3,7 @@ use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::review::Review;
 use crate::rules;
@@ -29,7 +29,7 @@ pub enum Kind {
     DumpClue,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ReviewLevel {
     Confirmed,

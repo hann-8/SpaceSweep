@@ -4,11 +4,14 @@ param(
     [string[]]$AnalysisJson = @(),
     [string]$PlanJson,
     [string]$ApplyJson,
+    [string]$SelectionManifest,
     [Parameter(Mandatory)][string]$OutputPath
 )
 
 $ErrorActionPreference = 'Stop'
 $html = [Text.StringBuilder]::new()
+$reviewChoices = [Collections.Generic.List[object]]::new()
+$previewScans = @{}
 
 function Read-ReportData([string]$File) {
     Get-Content -LiteralPath $File -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -64,8 +67,31 @@ function Get-ReasonLabel([string]$Code) {
     }
 }
 
-function Add-FindingTable($Rows) {
-    Add-Section '<div class="table-wrap"><table><thead><tr><th>类别与位置</th><th>大小</th><th>条目</th><th>发现依据</th></tr></thead><tbody>'
+function New-ReviewChoice($Rows, [string]$Label) {
+    if (!$SelectionManifest) { return '' }
+    $level = Get-ReviewLevel $Rows[0]
+    $groupId = $Rows[0].review.purpose.id
+    $id = $reviewChoices.Count
+    $scanIds = if ($groupId -and $previewScans.ContainsKey($groupId)) { $previewScans[$groupId] }
+    $reviewChoices.Add([ordered]@{
+        level = $level
+        label = $Label
+        group_id = $groupId
+        scan_ids = @($scanIds | Where-Object { $_ })
+        findings = @($Rows)
+    })
+    "<input type='checkbox' class='review-selector' data-review-choice='$id' data-review-level='$level' aria-label='勾选 $(Escape-Html $Label)'>"
+}
+
+function New-ReviewBranch([string]$Label) {
+    if ($SelectionManifest) {
+        "<input type='checkbox' class='review-selector' data-review-branch aria-label='整组勾选 $(Escape-Html $Label)'>"
+    }
+}
+
+function Add-FindingTable($Rows, [switch]$Selectable) {
+    $checkboxHeader = if ($Selectable -and $SelectionManifest) { '<th scope="col">勾选</th>' }
+    Add-Section "<div class='table-wrap'><table><thead><tr>$checkboxHeader<th>类别与位置</th><th>大小</th><th>条目</th><th>发现依据</th></tr></thead><tbody>"
     foreach ($finding in ($Rows | Sort-Object bytes -Descending)) {
         $label = Escape-Html $finding.label
         $location = Escape-Html $finding.path
@@ -73,7 +99,10 @@ function Add-FindingTable($Rows) {
         $items = Format-Count $finding.files
         $evidence = Escape-Html $finding.evidence
         $examples = Escape-Html ($finding.examples -join ' · ')
-        Add-Section "<tr><td>$label<br><small class='muted path'>$location</small></td><td class='bytes'>$size</td><td class='bytes'>$items</td><td>$evidence<br><small class='muted path'>$examples</small></td></tr>"
+        $checkbox = if ($checkboxHeader) {
+            "<td>$(New-ReviewChoice @($finding) "$($finding.label) $($finding.path)")</td>"
+        }
+        Add-Section "<tr>$checkbox<td>$label<br><small class='muted path'>$location</small></td><td class='bytes'>$size</td><td class='bytes'>$items</td><td>$evidence<br><small class='muted path'>$examples</small></td></tr>"
     }
     Add-Section '</tbody></table></div>'
 }
@@ -113,7 +142,8 @@ function Add-ReviewPurpose($Rows) {
         elseif ($blockers.Count) { '当前不可进预览，' + ($blockers -join '、') }
         else { '当前仅供审核' }
     $locations = Format-Count $Rows.Count
-    Add-Section "<div class='review-purpose' data-review-group='$id'><h4>$label <small class='muted numbers'>$totals</small></h4>"
+    $choice = New-ReviewChoice $Rows "$($review.owner.label) / $($review.feature.label) / $($review.purpose.label)"
+    Add-Section "<div class='review-purpose' data-review-group='$id'><h4>$choice$label <small class='muted numbers'>$totals</small></h4>"
     Add-Section "<dl><dt>用途</dt><dd>$usage</dd><dt>清理后</dt><dd>$impact</dd><dt>处理状态</dt><dd>$(Escape-Html $status)</dd></dl>"
     Add-Section "<details><summary>位置和依据 · $locations 处</summary>"
     Add-FindingTable $Rows
@@ -121,13 +151,17 @@ function Add-ReviewPurpose($Rows) {
 }
 
 function Add-ReviewTree($Rows) {
-    Add-Section '<p class="muted">可告诉 Agent 要处理哪个软件或清理项，以及要保留的子项。</p><div class="review-tree">'
+    if (!$SelectionManifest) {
+        Add-Section '<p class="muted">可告诉 Agent 要处理哪个软件或清理项，以及要保留的子项。</p>'
+    }
+    Add-Section '<div class="review-tree">'
     foreach ($owner in (Get-ReviewBranches $Rows 'owner')) {
         $node = $owner.Group[0].review.owner
         $id = Escape-Html $node.id
         $label = Escape-Html $node.label
         $totals = Format-ReviewTotals $owner.Group -ShowPreview
-        Add-Section "<details class='review-owner' data-review-group='$id'><summary>$label <small class='muted numbers'>$totals</small></summary>"
+        $choice = New-ReviewBranch $node.label
+        Add-Section "<details class='review-owner' data-review-group='$id'><summary>$choice$label <small class='muted numbers'>$totals</small></summary>"
         foreach ($feature in (Get-ReviewBranches $owner.Group 'feature')) {
             $purposes = @(Get-ReviewBranches $feature.Group 'purpose')
             if ($purposes.Count -gt 1) {
@@ -135,7 +169,8 @@ function Add-ReviewTree($Rows) {
                 $id = Escape-Html $node.id
                 $label = Escape-Html $node.label
                 $totals = Format-ReviewTotals $feature.Group -ShowPreview
-                Add-Section "<details class='review-feature' data-review-group='$id' open><summary>$label <small class='muted numbers'>$totals</small></summary>"
+                $choice = New-ReviewBranch "$($owner.Group[0].review.owner.label) / $($node.label)"
+                Add-Section "<details class='review-feature' data-review-group='$id' open><summary>$choice$label <small class='muted numbers'>$totals</small></summary>"
             }
             foreach ($purpose in $purposes) { Add-ReviewPurpose $purpose.Group }
             if ($purposes.Count -gt 1) { Add-Section '</details>' }
@@ -160,6 +195,17 @@ $analyses = @(
 )
 $areas = @($analyses | ForEach-Object { $_.analysis } | Where-Object { $_ })
 $discoveries = @($analyses | ForEach-Object { $_.discovery } | Where-Object { $_ })
+if ($SelectionManifest) {
+    foreach ($source in $analyses) {
+        if ($source.scan_id -cnotmatch '^[0-9a-f]{64}$') { continue }
+        foreach ($finding in $source.discovery.findings) {
+            $id = $finding.review.purpose.id
+            if (!$id -or $finding.preview.files -le 0) { continue }
+            if (!$previewScans.ContainsKey($id)) { $previewScans[$id] = [Collections.Generic.HashSet[string]]::new() }
+            [void]$previewScans[$id].Add($source.scan_id)
+        }
+    }
+}
 
 function Get-CoverageLabel($Volume) {
     $roots = @($Volume.mounts | ForEach-Object { $_.TrimEnd([char[]]@('\', '/')) })
@@ -240,6 +286,11 @@ summary { cursor:pointer; font-weight:650; }
 .review-purpose dt { color:var(--muted); }
 .review-purpose dd { margin:0; }
 .review-purpose details summary { font-size:13px; color:var(--muted); }
+.review-selector { accent-color:var(--teal); width:1rem; height:1rem; margin:0 8px 0 3px; vertical-align:-2px; cursor:pointer; }
+.selection-bar { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; background:var(--paper); border:1px solid var(--line); border-radius:12px; margin:12px 0; padding:10px 14px; }
+.selection-bar p { margin:0; }
+.selection-bar button { font:inherit; font-weight:650; color:white; background:#0d685f; border:0; border-radius:7px; padding:7px 14px; cursor:pointer; }
+.selection-bar button:disabled { opacity:.55; cursor:default; }
 small { font-size:13px; }
 footer { color:var(--muted); border-top:1px solid var(--line); margin-top:26px; padding-top:12px; }
 @media (max-width:580px) { main { padding:22px 12px 32px; } .grid { grid-template-columns:1fr; } table { min-width:480px; } }
@@ -284,6 +335,9 @@ if ($discoveries.Count) {
         Add-Section "<a class='card review-card $($level.Class)' href='#junk-$($level.Key)'><h3>$($level.Label)</h3><strong class='value numbers'>$total</strong><div>$count 项 · $($level.Description)</div></a>"
     }
     Add-Section '</div>'
+    if ($SelectionManifest -and ($findings | Where-Object { (Get-ReviewLevel $_) -in 'needs_review','suspected' } | Select-Object -First 1)) {
+        Add-Section '<div id="review-selection" class="selection-bar"><div><output id="selection-status" aria-live="polite"></output><p class="muted">黄色按处理资格生成预览，绿色交给 Agent 复核。</p></div><button id="submit-selection" type="button" disabled>提交勾选</button></div>'
+    }
     foreach ($collection in $levels) {
         $groupCount = $collection.Rows.Count
         if ($collection.Key -eq 'needs_review') {
@@ -292,13 +346,16 @@ if ($discoveries.Count) {
             $groupCount = @(Get-ReviewBranches $reviewRows 'purpose').Count + $otherRows.Count
         }
         $groups = Format-Count $groupCount
-        Add-Section "<details id='junk-$($collection.Key)'$($collection.Open)><summary><span class='review-tag $($collection.Class)'>$($collection.Label)</span> · $groups 组</summary>"
+        $choice = if ($groupCount -gt 0 -and $collection.Key -in 'needs_review','suspected') {
+            New-ReviewBranch $collection.Label
+        }
+        Add-Section "<details id='junk-$($collection.Key)'$($collection.Open)><summary>$choice<span class='review-tag $($collection.Class)'>$($collection.Label)</span> · $groups 组</summary>"
         if ($collection.Key -eq 'needs_review') {
             if ($reviewRows.Count) { Add-ReviewTree $reviewRows }
-            if ($otherRows.Count) { Add-FindingTable $otherRows }
+            if ($otherRows.Count) { Add-FindingTable $otherRows -Selectable }
         }
         elseif ($collection.Rows.Count) {
-            Add-FindingTable $collection.Rows
+            Add-FindingTable $collection.Rows -Selectable:($collection.Key -eq 'suspected')
         }
         Add-Section '</details>'
     }
@@ -470,15 +527,29 @@ foreach ($rule in $scan.rules | Where-Object status -ne 'not_found') {
     Add-Section "<tr><td>$label<br><small class='muted path'>$root</small></td><td class='bytes'>$read</td><td class='bytes'>$bytes</td><td>$safeAction</td></tr>"
 }
 Add-Section '</tbody></table></div></section>'
-Add-Section '<footer>磁盘容量、目录统计和预览量采用各自口径。报告只使用本机扫描记录。</footer></main></body></html>'
+Add-Section '<footer>磁盘容量、目录统计和预览量采用各自口径。报告只使用本机扫描记录。</footer></main>'
+if ($SelectionManifest) {
+    Add-Section '<script>'
+    Add-Section (Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $PSScriptRoot 'report-selection.js'))
+    Add-Section '</script>'
+}
+Add-Section '</body></html>'
 
-$fullPath = [IO.Path]::GetFullPath($OutputPath)
-$stream = [IO.File]::Open($fullPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
-try {
-    $bytes = [Text.Encoding]::UTF8.GetBytes($html.ToString())
-    $stream.Write($bytes, 0, $bytes.Length)
+function Write-ReportFile([string]$Path, [string]$Content) {
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    $stream = [IO.File]::Open($fullPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes($Content)
+        $stream.Write($bytes, 0, $bytes.Length)
+    }
+    finally {
+        $stream.Dispose()
+    }
+    $fullPath
 }
-finally {
-    $stream.Dispose()
+
+if ($SelectionManifest) {
+    $manifest = [ordered]@{ schema_version = 1; choices = $reviewChoices.ToArray() }
+    [void](Write-ReportFile $SelectionManifest ($manifest | ConvertTo-Json -Depth 14 -Compress))
 }
-$fullPath
+Write-ReportFile $OutputPath ($html.ToString())

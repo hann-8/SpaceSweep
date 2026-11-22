@@ -19,6 +19,11 @@ description: Find and clean junk across local Windows drives, including stale te
 
 游戏仍安装时，着色器编译产物作为在用数据保留。DXCache 等共享或归属未确认的缓存只展示占用。依据具体游戏的安装和使用证据判断是否为残留。
 
+## 网页勾选
+
+1. 用户要从报告勾选时，在扫描会话运行 `.\scripts\spacesweep.ps1 Review -SessionDir $session`。读取首行 `waiting` 的 `url`，在当前对话发可点击链接，并等待同一进程返回提交结果。页面可勾选整组、单项或保留子项，用户点「提交勾选」即可回传。链接默认有效 15 分钟，提交后关闭。过期可按同一会话重新打开。
+2. 收到 `submitted` 后读取同一会话的 `selection_file`。有 `include_groups` 和 `scan_ids` 时，逐项传入 `--include-group` 和 `--scan` 来生成一份所选范围的预览。其他被勾选的黄色项目按处理状态汇报，绿色只针对勾选的发现复核用途和位置。
+
 ## 预览、确认和清理
 
 1. 实际清理请求先生成预览。使用扫描得到的 `scan_id` 执行 `.\scripts\spacesweep.ps1 Plan -SessionDir $session -Arguments @('--scan',$scanId)`。多个扫描可重复传 `--scan`。用户选择某个软件、功能或用途时，从相应发现的 `review` 读取节点 ID 传给 `--include-group`。要保留的节点传给 `--exclude-group`，也可按规则、盘或准确路径排除。按所选组的处理状态和预览实际条目汇报。如果扫描无可处理项或所选范围为空，说明对应原因。

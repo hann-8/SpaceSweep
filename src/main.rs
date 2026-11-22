@@ -7,6 +7,7 @@ mod checked_file;
 mod cleanup;
 mod discovery;
 mod review;
+mod review_server;
 mod rules;
 mod scan;
 mod store;
@@ -74,6 +75,15 @@ enum Command {
         #[arg(long)]
         exclude_file: Vec<PathBuf>,
     },
+    /// Serve one local review page and receive the user's selections.
+    Review {
+        #[arg(long)]
+        report: PathBuf,
+        #[arg(long)]
+        manifest: PathBuf,
+        #[arg(long, default_value_t = 900, value_parser = clap::value_parser!(u64).range(1..=3600))]
+        timeout_seconds: u64,
+    },
     /// Permanently delete the exact items in an explicitly approved preview.
     Apply { plan_id: String },
 }
@@ -136,6 +146,14 @@ fn main() -> Result<()> {
                 &cancellation,
             )?;
             println!("{}", serde_json::to_string_pretty(&preview)?);
+        }
+        Command::Review {
+            report,
+            manifest,
+            timeout_seconds,
+        } => {
+            let store = store::Store::open(cli.state_dir.as_deref())?;
+            review_server::serve(&store, &report, &manifest, timeout_seconds, &cancellation)?;
         }
         Command::Apply { plan_id } => {
             let store = store::Store::open(cli.state_dir.as_deref())?;
