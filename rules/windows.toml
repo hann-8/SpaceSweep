@@ -12,8 +12,9 @@ label = "Chrome 网页磁盘缓存"
 anchor = "local_app_data"
 path = "Google/Chrome/User Data"
 profiles = true
-action = "usage"
-note = "网页磁盘缓存的用量。Chrome 可在设置中单独处理缓存的图片和文件。"
+action = "chrome_http_cache"
+verified_major = 157
+note = "仅 Chrome 157 的默认用户数据位置、已验证的网页磁盘缓存布局。请先正常退出 Chrome，页面资源会按需重新下载。"
 
 [[rules]]
 id = "edge.http_cache"

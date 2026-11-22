@@ -11,9 +11,13 @@ use windows_sys::Win32::Foundation::{ERROR_NO_MORE_FILES, HANDLE, INVALID_HANDLE
 use windows_sys::Win32::Globalization::CompareStringOrdinal;
 use windows_sys::Win32::Storage::FileSystem::{
     FindFirstVolumeW, FindNextVolumeW, FindVolumeClose, GetDiskFreeSpaceExW, GetDriveTypeW,
-    GetVolumeInformationW, GetVolumePathNamesForVolumeNameW,
+    GetFileVersionInfoSizeW, GetFileVersionInfoW, GetVolumeInformationW,
+    GetVolumePathNamesForVolumeNameW, VS_FIXEDFILEINFO, VerQueryValueW,
 };
 use windows_sys::Win32::System::Com::CoTaskMemFree;
+use windows_sys::Win32::System::Diagnostics::ToolHelp::{
+    CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
+};
 use windows_sys::Win32::UI::Shell::{
     FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_ProgramFiles,
     FOLDERID_ProgramFilesX86, SHGetKnownFolderPath,
@@ -210,6 +214,75 @@ pub fn space(path: impl AsRef<OsStr>) -> io::Result<Space> {
         total_bytes: total,
         available_bytes: available,
     })
+}
+
+pub fn process_running(executable: &str) -> io::Result<bool> {
+    use std::os::windows::io::{FromRawHandle, OwnedHandle};
+    let snapshot = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
+    if snapshot == INVALID_HANDLE_VALUE {
+        return Err(io::Error::last_os_error());
+    }
+    let _close = unsafe { OwnedHandle::from_raw_handle(snapshot) };
+    let mut entry = PROCESSENTRY32W {
+        dwSize: size_of::<PROCESSENTRY32W>() as u32,
+        ..Default::default()
+    };
+    let mut available = unsafe { Process32FirstW(snapshot, &mut entry) };
+    while available != 0 {
+        if text(&entry.szExeFile).eq_ignore_ascii_case(executable) {
+            return Ok(true);
+        }
+        available = unsafe { Process32NextW(snapshot, &mut entry) };
+    }
+    let error = io::Error::last_os_error();
+    if error.raw_os_error() == Some(ERROR_NO_MORE_FILES as i32) {
+        Ok(false)
+    } else {
+        Err(error)
+    }
+}
+
+fn executable_major(path: &Path) -> io::Result<u32> {
+    let path = wide(path)?;
+    let mut handle = 0;
+    let size = unsafe { GetFileVersionInfoSizeW(path.as_ptr(), &mut handle) };
+    if size == 0 {
+        return Err(io::Error::last_os_error());
+    }
+    let mut data = vec![0u32; (size as usize).div_ceil(4)];
+    if unsafe { GetFileVersionInfoW(path.as_ptr(), 0, size, data.as_mut_ptr().cast()) } == 0 {
+        return Err(io::Error::last_os_error());
+    }
+    let root = [b'\\' as u16, 0];
+    let mut value = null_mut();
+    let mut length = 0;
+    let ok =
+        unsafe { VerQueryValueW(data.as_ptr().cast(), root.as_ptr(), &mut value, &mut length) };
+    if ok == 0 || value.is_null() || (length as usize) < size_of::<VS_FIXEDFILEINFO>() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "invalid executable version",
+        ));
+    }
+    let info = unsafe { value.cast::<VS_FIXEDFILEINFO>().read_unaligned() };
+    Ok(info.dwProductVersionMS >> 16)
+}
+
+pub fn installed_chrome_majors() -> Vec<u32> {
+    [
+        Folder::ProgramFiles,
+        Folder::ProgramFilesX86,
+        Folder::LocalAppData,
+    ]
+    .into_iter()
+    .filter_map(|folder| {
+        let path = folder
+            .known()
+            .ok()?
+            .join("Google/Chrome/Application/chrome.exe");
+        executable_major(&path).ok()
+    })
+    .collect()
 }
 
 fn mounts(volume: &[u16]) -> io::Result<Vec<PathBuf>> {

@@ -20,12 +20,17 @@ const SEVEN_DAYS: u64 = 7 * 24 * 60 * 60 * TICKS_PER_SECOND;
 pub enum Action {
     Usage,
     OldTemp,
+    ChromeHttpCache,
     Installers,
 }
 
 impl Action {
     pub fn recursive(self) -> bool {
         self == Self::Usage
+    }
+
+    pub fn can_delete(self) -> bool {
+        matches!(self, Self::OldTemp | Self::ChromeHttpCache)
     }
 }
 
@@ -39,6 +44,7 @@ pub struct Rule {
     pub path: PathBuf,
     #[serde(default)]
     pub profiles: bool,
+    pub verified_major: Option<u32>,
     pub action: Action,
     pub note: String,
 }
@@ -65,6 +71,15 @@ pub fn load() -> Result<Vec<Rule>> {
                     && rule.path == Path::new("Temp")
                     && !rule.profiles,
                 "temporary file rule must use the current user's LocalAppData Temp"
+            );
+        }
+        if rule.action == Action::ChromeHttpCache {
+            ensure!(
+                matches!(rule.anchor, Folder::LocalAppData)
+                    && rule.path == Path::new("Google/Chrome/User Data")
+                    && rule.profiles
+                    && rule.verified_major.is_some(),
+                "Chrome cache rule must use the verified profile layout"
             );
         }
     }
@@ -128,6 +143,9 @@ impl Rule {
 
     pub fn matches(&self, file: &Path, stamp: Stamp, now: u64) -> bool {
         let extension = file.extension().and_then(OsStr::to_str).unwrap_or_default();
+        let ordinary = stamp.attributes
+            & (windows::PROTECTED_FILE | windows::SKIP_ATTRIBUTES | windows::DIRECTORY)
+            == 0;
         match self.action {
             Action::Usage => true,
             Action::Installers => ["exe", "msi", "msix", "appx", "msixbundle", "appxbundle"]
@@ -136,16 +154,69 @@ impl Rule {
             Action::OldTemp => {
                 let old = now.saturating_sub(SEVEN_DAYS);
                 extension.eq_ignore_ascii_case("tmp")
-                    && stamp.attributes
-                        & (windows::PROTECTED_FILE | windows::SKIP_ATTRIBUTES | windows::DIRECTORY)
-                        == 0
+                    && ordinary
                     && stamp.created != 0
                     && stamp.modified != 0
                     && stamp.created <= old
                     && stamp.modified <= old
             }
+            Action::ChromeHttpCache => {
+                ordinary
+                    && file
+                        .file_name()
+                        .and_then(OsStr::to_str)
+                        .is_some_and(chrome_blockfile_name)
+            }
         }
     }
+
+    pub fn block_reason(&self, root: &Location, volumes: &[Volume]) -> Option<String> {
+        if !self.action.can_delete() {
+            return None;
+        }
+        if !volumes
+            .iter()
+            .any(|v| v.id == root.volume && v.filesystem.as_deref() == Some("NTFS"))
+        {
+            return Some("filesystem_not_verified".into());
+        }
+        if self.action == Action::ChromeHttpCache {
+            let majors = windows::installed_chrome_majors();
+            if majors.is_empty()
+                || majors
+                    .iter()
+                    .any(|major| Some(*major) != self.verified_major)
+            {
+                return Some("chrome_version_not_verified".into());
+            }
+            if !["index", "data_0"].into_iter().all(|name| {
+                fs::symlink_metadata(root.native().join(name)).is_ok_and(|meta| {
+                    let stamp = Stamp::from(&meta);
+                    meta.is_file() && stamp.attributes & windows::SKIP_ATTRIBUTES == 0
+                })
+            }) {
+                return Some("chrome_cache_layout_not_verified".into());
+            }
+            match windows::process_running("chrome.exe") {
+                Ok(true) => return Some("chrome_running".into()),
+                Err(_) => return Some("chrome_process_state_unavailable".into()),
+                Ok(false) => {}
+            }
+        }
+        None
+    }
+}
+
+pub fn chrome_blockfile_name(name: &str) -> bool {
+    name == "index"
+        || name.strip_prefix("data_").is_some_and(|digits| {
+            !digits.is_empty()
+                && digits.len() <= 3
+                && digits.bytes().all(|byte| byte.is_ascii_digit())
+        })
+        || name.strip_prefix("f_").is_some_and(|digits| {
+            digits.len() == 6 && digits.bytes().all(|byte| byte.is_ascii_hexdigit())
+        })
 }
 
 pub fn windows_time_now() -> u64 {

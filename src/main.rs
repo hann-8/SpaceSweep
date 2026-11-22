@@ -3,8 +3,11 @@
 #[cfg(not(windows))]
 compile_error!("SpaceSweep supports Windows.");
 
+mod checked_file;
+mod cleanup;
 mod rules;
 mod scan;
+mod store;
 mod windows;
 
 use std::path::PathBuf;
@@ -17,6 +20,9 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(version, about = "Inspect and clean local Windows storage")]
 struct Cli {
+    /// Existing local directory for scan snapshots, plans and receipts.
+    #[arg(long, global = true)]
+    state_dir: Option<PathBuf>,
     #[command(subcommand)]
     command: Command,
 }
@@ -41,6 +47,21 @@ enum Command {
         #[arg(long)]
         progress: bool,
     },
+    /// Build a local, read-only preview for eligible candidates in saved scans.
+    Plan {
+        /// Saved scan ID. Repeat to combine scans.
+        #[arg(long, required = true)]
+        scan: Vec<String>,
+        #[arg(long)]
+        exclude_rule: Vec<String>,
+        #[arg(long)]
+        exclude_volume: Vec<PathBuf>,
+        /// Remove an exact displayed path from the preview.
+        #[arg(long)]
+        exclude_file: Vec<PathBuf>,
+    },
+    /// Permanently delete the exact items in an explicitly approved preview.
+    Apply { plan_id: String },
 }
 
 fn main() -> Result<()> {
@@ -56,7 +77,7 @@ fn main() -> Result<()> {
             top,
             progress,
         } => {
-            let report = scan::run(
+            let mut report = scan::run(
                 scan::Options {
                     volumes: volume,
                     path,
@@ -66,6 +87,37 @@ fn main() -> Result<()> {
                 },
                 &cancellation,
             )?;
+            if !report.cancelled
+                && !report.candidates.is_empty()
+                && let Err(error) = store::Store::open(cli.state_dir.as_deref())
+                    .and_then(|store| cleanup::save_scan(&store, &mut report))
+            {
+                report.state_error = Some(format!("{error:#}"));
+            }
+            println!("{}", serde_json::to_string_pretty(&report)?);
+        }
+        Command::Plan {
+            scan,
+            exclude_rule,
+            exclude_volume,
+            exclude_file,
+        } => {
+            let store = store::Store::open(cli.state_dir.as_deref())?;
+            let preview = cleanup::plan(
+                &store,
+                cleanup::Selections {
+                    scans: scan,
+                    exclude_rule,
+                    exclude_volume,
+                    exclude_file,
+                },
+                &cancellation,
+            )?;
+            println!("{}", serde_json::to_string_pretty(&preview)?);
+        }
+        Command::Apply { plan_id } => {
+            let store = store::Store::open(cli.state_dir.as_deref())?;
+            let report = cleanup::apply(&store, plan_id, &cancellation)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
         }
     }

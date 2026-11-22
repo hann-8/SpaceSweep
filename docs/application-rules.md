@@ -27,6 +27,8 @@
 
 先支持浏览器磁盘缓存的规则验证，并优先识别 QQ、微信实际占用。以下是逐步覆盖的对象和处理方向。报告以本机版本和路径的实际验证结果为准。
 
+当前可执行规则随二进制嵌入 `rules/windows.toml`。旧临时文件首版限于当前用户 LocalAppData 的 `Temp` 顶层普通 `.tmp` 文件。Chrome 规则限于 157 主版本的默认配置位置，要求检测到已验证的块文件布局且 Chrome 已退出。只匹配 `Cache/Cache_Data` 里的 `index`、`data_数字` 和 `f_六位十六进制` 普通文件。用实际 Chrome 的隔离配置验证了布局、清除后重建和样本 Cookie 保留。Edge、聊天数据和安装包按发现项展示。 [Chromium 块文件实现](https://chromium.googlesource.com/chromium/chromium/+/HEAD/net/disk_cache/blockfile/backend_worker_v3.cc)
+
 | 软件举例 | 优先检查与处理方向 |
 | --- | --- |
 | QQ、微信、企业微信、钉钉、飞书、Teams | 用已知位置、应用配置或用户指定目录做用量检查，定位实际数据盘。聊天记录、收发文件、账号和备份按用户资料处理。独立可重建的缓存需要按版本核实。Teams 的缓存清理适合特定问题，优先展示官方入口。 [微信隐私保护指引](https://oper.my-qcloud.com/cgi-bin/readtemplate?lang=zh_CN&s=privacy&t=weixin_agreement) · [Teams 缓存说明](https://learn.microsoft.com/en-us/troubleshoot/microsoftteams/teams-administration/clear-teams-cache) |

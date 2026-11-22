@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 use anyhow::{Context, Result, ensure};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::rules::{self, Action, Rule};
 use crate::windows::{self, Location, Stamp, Volume};
@@ -171,6 +171,8 @@ pub struct RuleReport {
     pub totals: Option<Totals>,
     pub matching_files: u64,
     pub matching_logical_bytes: u64,
+    pub eligible_files: u64,
+    pub blocked_by: Option<String>,
     pub status: &'static str,
     pub reason: Option<String>,
 }
@@ -194,6 +196,18 @@ pub struct Report {
     pub analysis: Vec<DirectoryReport>,
     pub elapsed_ms: u64,
     pub cancelled: bool,
+    pub scan_id: Option<String>,
+    pub scan_file: Option<PathBuf>,
+    pub state_error: Option<String>,
+    #[serde(skip)]
+    pub candidates: Vec<Candidate>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Candidate {
+    pub rule_id: String,
+    pub location: Location,
+    pub stamp: Stamp,
 }
 
 #[derive(Debug)]
@@ -216,6 +230,8 @@ fn rule_row(rule: &Rule) -> RuleReport {
         totals: None,
         matching_files: 0,
         matching_logical_bytes: 0,
+        eligible_files: 0,
+        blocked_by: None,
         status: "not_found",
         reason: None,
     }
@@ -263,6 +279,10 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         analysis: Vec::new(),
         elapsed_ms: 0,
         cancelled: false,
+        scan_id: None,
+        scan_file: None,
+        state_error: None,
+        candidates: Vec::new(),
     };
     if options.progress {
         eprintln!("Volumes discovered: {}", result.volumes.len());
@@ -302,12 +322,28 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                         windows::view(&root, &result.volumes).display()
                     );
                 }
-                let checked = walk(&root, rule.action.recursive(), 0, cancel, |file, stamp| {
-                    if rule.matches(&file.relative, stamp, now) {
-                        row.matching_files += 1;
-                        row.matching_logical_bytes =
-                            row.matching_logical_bytes.saturating_add(stamp.size);
-                    }
+                let verified_root = windows::check_directory(&root);
+                if verified_root.is_ok() {
+                    row.blocked_by = rule.block_reason(&root, &result.volumes);
+                }
+                let may_plan =
+                    verified_root.is_ok() && rule.action.can_delete() && row.blocked_by.is_none();
+                let checked = verified_root.and_then(|()| {
+                    walk(&root, rule.action.recursive(), 0, cancel, |file, stamp| {
+                        if rule.matches(&file.relative, stamp, now) {
+                            row.matching_files += 1;
+                            row.matching_logical_bytes =
+                                row.matching_logical_bytes.saturating_add(stamp.size);
+                            if may_plan {
+                                row.eligible_files += 1;
+                                result.candidates.push(Candidate {
+                                    rule_id: rule.id.clone(),
+                                    location: file.clone(),
+                                    stamp,
+                                });
+                            }
+                        }
+                    })
                 });
                 match checked {
                     Ok(output) => {
