@@ -31,7 +31,7 @@
 .\target\release\spacesweep.exe apply '<plan_id>'
 ```
 
-执行结果给出成功、跳过、失败、待释放和各盘净变化。默认状态与明细在当前用户 LocalAppData 下的 `SpaceSweep`，亦可用 `--state-dir <现有本机目录>`，整个流程使用同一目录。
+执行结果给出成功、跳过、失败、待释放和各盘净变化。默认状态与明细在当前用户 LocalAppData 下的 `SpaceSweep`。Windows 把默认目录重定向到应用的 LocalCache 时，返回解析后的实际位置。亦可用 `--state-dir <现有本机目录>`，整个流程使用同一目录。 [Windows 应用数据重定向](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-behind-the-scenes#file-system)
 
 ## 阅读结果
 

@@ -91,6 +91,23 @@ fn check_final(handle: HANDLE, expected: &Path) -> io::Result<PathBuf> {
     Ok(actual)
 }
 
+pub fn resolved_directory(path: &Path) -> io::Result<PathBuf> {
+    let handle = open(
+        path,
+        FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        FILE_FLAG_BACKUP_SEMANTICS,
+    )?;
+    let attrs = basic(handle.as_raw_handle())?.dwFileAttributes;
+    if attrs & windows::DIRECTORY == 0 || attrs & windows::SKIP_ATTRIBUTES != 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            "not an ordinary directory",
+        ));
+    }
+    final_path(handle.as_raw_handle())
+}
+
 pub fn pin_directory(location: &Location) -> io::Result<Vec<OwnedHandle>> {
     if !windows::valid_relative(&location.relative) {
         return Err(io::Error::new(

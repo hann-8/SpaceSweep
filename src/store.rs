@@ -11,7 +11,7 @@ use uuid::Uuid;
 use windows_sys::Win32::Storage::FileSystem::FILE_FLAG_OPEN_REPARSE_POINT;
 
 use crate::checked_file;
-use crate::windows::{self, Folder};
+use crate::windows::{self, Folder, Location, Volume};
 
 pub struct Store {
     native: PathBuf,
@@ -33,26 +33,15 @@ fn valid_id(id: &str) -> bool {
 impl Store {
     pub fn open(override_path: Option<&Path>) -> Result<Self> {
         let volumes = windows::volumes()?;
-        let display = match override_path {
-            Some(path) => windows::scope_path(path)?,
-            None => {
-                let app_data = Folder::LocalAppData.known()?;
-                let parent = windows::locate(&app_data, &volumes)
-                    .context("LocalAppData is outside the local mounted volumes")?;
-                let _parent = checked_file::pin_directory(&parent)?;
-                let directory = app_data.join("SpaceSweep");
-                match fs::create_dir(&directory) {
-                    Ok(()) => {}
-                    Err(err) if err.kind() == io::ErrorKind::AlreadyExists => {}
-                    Err(err) => {
-                        return Err(err).context("create a local SpaceSweep state directory");
-                    }
-                }
-                directory
+        let (location, display) = match override_path {
+            Some(path) => {
+                let display = windows::scope_path(path)?;
+                let location = windows::locate(&display, &volumes)
+                    .context("state directory must be on a local mounted volume")?;
+                (location, display)
             }
+            None => default_directory(&volumes)?,
         };
-        let location = windows::locate(&display, &volumes)
-            .context("state directory must be on a local mounted volume")?;
         Ok(Self {
             native: location.native(),
             display,
@@ -119,5 +108,67 @@ impl Store {
         let name = format!("receipt-{}.jsonl", Uuid::new_v4());
         let file = File::create_new(self.native.join(&name))?;
         Ok((file, self.display.join(name)))
+    }
+}
+
+fn default_directory(volumes: &[Volume]) -> Result<(Location, PathBuf)> {
+    let app_data = Folder::LocalAppData.known()?;
+    let parent = windows::locate(&app_data, volumes)
+        .context("LocalAppData is outside the local mounted volumes")?;
+    let _parent = checked_file::pin_directory(&parent)?;
+    let directory = app_data.join("SpaceSweep");
+    match fs::create_dir(&directory) {
+        Ok(()) => {}
+        Err(err) if err.kind() == io::ErrorKind::AlreadyExists => {}
+        Err(err) => return Err(err).context("create a local SpaceSweep state directory"),
+    }
+    // Windows can map this new directory into the launching app's LocalCache.
+    // Resolve only the engine's own default state directory this way.
+    let final_path = checked_file::resolved_directory(&parent.child("SpaceSweep").native())?;
+    let location = windows::locate(&final_path, volumes)
+        .context("resolved state directory is outside the local mounted volumes")?;
+    let relative = windows::relative_to(&location.relative, &parent.relative);
+    ensure!(
+        location.volume == parent.volume && relative.as_deref().is_some_and(is_default_state_path),
+        "resolved state directory is outside the expected local state locations"
+    );
+    let display = windows::view(&location, volumes);
+    Ok((location, display))
+}
+
+fn is_default_state_path(relative: &Path) -> bool {
+    let parts: Vec<_> = relative.components().map(|part| part.as_os_str()).collect();
+    let named = |name, expected: &str| windows::same_name(name, expected.as_ref());
+    match parts.as_slice() {
+        [leaf] => named(leaf, "SpaceSweep"),
+        [packages, family, cache, local, leaf] => {
+            named(packages, "Packages")
+                && family.to_str().is_some_and(|name| name.contains('_'))
+                && named(cache, "LocalCache")
+                && named(local, "Local")
+                && named(leaf, "SpaceSweep")
+        }
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_only_the_ordinary_or_packaged_default_state_directory() {
+        assert!(is_default_state_path(Path::new("SpaceSweep")));
+        assert!(is_default_state_path(Path::new(
+            "Packages/Example.App_123/LocalCache/Local/SpaceSweep"
+        )));
+        for invalid in [
+            "SpaceSweep/other",
+            "Packages/Example.App_123/LocalState/SpaceSweep",
+            "Packages/Example.App_123/LocalCache/Local/other",
+            "../SpaceSweep",
+        ] {
+            assert!(!is_default_state_path(Path::new(invalid)));
+        }
     }
 }
