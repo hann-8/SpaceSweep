@@ -15,6 +15,8 @@ description: Inspect and clean local Windows storage. Use for disk usage, space 
 
 用户怀疑快查遗漏时，按实际需要用 `scan --path 'D:\' --max-seconds 20` 等命令逐盘深查。检查 `status`、`stop_reason` 和跳过原因。快查覆盖各盘的已知位置，目录分析另统计遍历到的位置。大目录的文件大小用来定位用量。
 
+游戏仍安装时，着色器编译产物作为在用数据保留。DXCache 等共享或归属未确认的缓存只展示占用。依据具体游戏的安装和使用证据判断是否为残留。
+
 ## 预览、确认和清理
 
 1. 实际清理请求先生成预览。使用扫描得到的 `scan_id` 执行 `.\target\release\spacesweep.exe plan --scan <scan_id>`。多个扫描可重复传 `--scan`。用 `--exclude-rule`、`--exclude-volume` 或 `--exclude-file`落实用户的排除选择。扫描取消、没有 `scan_id` 或候选为零时，按照实际原因汇报。
