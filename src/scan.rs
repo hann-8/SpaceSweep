@@ -444,6 +444,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 now,
                 options.progress,
                 &temp_candidates,
+                &result.rules,
             );
             discovery.quick_elapsed_ms = Some(started.elapsed().as_millis() as u64);
         }
@@ -556,6 +557,7 @@ fn discover_known(
     now: u64,
     progress: bool,
     temp_candidates: &HashMap<&Location, Stamp>,
+    rules: &[RuleReport],
 ) -> Vec<Location> {
     let local = match Folder::LocalAppData.known() {
         Ok(local) => local,
@@ -569,8 +571,7 @@ fn discover_known(
             return Vec::new();
         }
     };
-    let mut covered = Vec::new();
-    for (label, path, kind) in [
+    let mut areas: Vec<_> = [
         ("应用崩溃转储", "CrashDumps", Some(Kind::CrashDumps)),
         (
             "Windows 缩略图缓存",
@@ -586,11 +587,28 @@ fn discover_known(
         ("pip 旧版 HTTP 缓存", "pip/Cache/http", Some(Kind::PipCache)),
         ("pip wheel 缓存", "pip/Cache/wheels", Some(Kind::PipCache)),
         ("用户临时目录", "Temp", None),
-    ] {
+    ]
+    .into_iter()
+    .map(|(label, path, kind)| (label, local.join(path), kind))
+    .collect();
+    areas.extend(rules.iter().filter_map(|row| {
+        let label = match row.rule_id.as_str() {
+            "chrome.http_cache" => "Chrome 网页代码缓存",
+            "edge.http_cache" => "Edge 网页代码缓存",
+            _ => return None,
+        };
+        let profile = row.root.as_deref()?.parent()?.parent()?;
+        Some((
+            label,
+            profile.join("Code Cache"),
+            Some(Kind::BrowserCodeCache),
+        ))
+    }));
+    let mut covered = Vec::new();
+    for (label, path, kind) in areas {
         if control.stopped() {
             break;
         }
-        let path = local.join(path);
         let Some(root) = windows::locate(&path, volumes) else {
             continue;
         };
@@ -636,7 +654,11 @@ fn discover_known(
         });
         let (status, detail) = match checked {
             Ok(output) => {
-                groups.append_to(report, volumes);
+                groups.append_to(
+                    report,
+                    volumes,
+                    (kind == Some(Kind::BrowserCodeCache)).then_some(label),
+                );
                 if control.reason.get().is_some() {
                     ("partial", Some("扫描提前结束。".into()))
                 } else {
@@ -735,7 +757,7 @@ fn analyze(
         Err(error) => report.error = Some(error.to_string()),
     }
     if let Some((discovery, _, _)) = discovery {
-        groups.append_to(discovery, volumes);
+        groups.append_to(discovery, volumes, None);
     }
     report
 }

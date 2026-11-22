@@ -16,6 +16,7 @@ pub enum Kind {
     Minidump,
     Thumbnails,
     BrowserCache,
+    BrowserCodeCache,
     NpmCache,
     PipCache,
     OldTemp,
@@ -62,6 +63,10 @@ impl Kind {
             Self::BrowserCache => (
                 "网页磁盘缓存",
                 "浏览器用户配置中的 Cache/Cache_Data，网页资源可按需重新下载。",
+            ),
+            Self::BrowserCodeCache => (
+                "网页代码缓存",
+                "浏览器为网页脚本生成的代码缓存。清理后再次访问网页时可能需要重新编译。",
             ),
             Self::NpmCache => (
                 "npm 软件包下载缓存",
@@ -188,10 +193,13 @@ impl Groups {
         }
     }
 
-    pub fn append_to(self, report: &mut Report, volumes: &[Volume]) {
+    pub fn append_to(self, report: &mut Report, volumes: &[Volume], label: Option<&str>) {
         report
             .findings
             .extend(self.0.into_values().map(|mut finding| {
+                if let Some(label) = label {
+                    finding.label = label.into();
+                }
                 finding.path = windows::view(
                     &Location {
                         volume: finding.volume_id.clone(),

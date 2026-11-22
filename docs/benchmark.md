@@ -32,3 +32,7 @@
 .\bleachbit_console.exe --preview system.tmp
 .\bleachbit_console.exe --preview google_chrome.crash_reports microsoft_edge.crash_reports brave.cache firefox.cache discord.cache docker.cache winrar.temp vlc.memory_dump adobe_reader.cache
 ```
+
+## 补齐网页代码缓存后复测
+
+SpaceSweep 已将两款浏览器的 `Code Cache` 加到黄色审核项。复跑实机报告，Chrome 识别 3,957 个文件、336,624,184 字节，Edge 识别 3,707 个文件、762,605,049 字节，两边与对照记录的数量和字节数相同。快查阶段约 1.01 秒，三盘深查约 18.23 秒。
