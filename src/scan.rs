@@ -583,6 +583,11 @@ fn discover_known(
             "npm-cache/_cacache",
             Some(Kind::NpmCache),
         ),
+        (
+            "Edge 组件更新缓存",
+            "Microsoft/Edge/User Data/component_crx_cache",
+            Some(Kind::BrowserComponentCache),
+        ),
         ("pip HTTP 缓存", "pip/Cache/http-v2", Some(Kind::PipCache)),
         ("pip 旧版 HTTP 缓存", "pip/Cache/http", Some(Kind::PipCache)),
         ("pip wheel 缓存", "pip/Cache/wheels", Some(Kind::PipCache)),
@@ -616,7 +621,7 @@ fn discover_known(
             eprintln!("Finding junk in {}", path.display());
         }
         let mut groups = Groups::default();
-        let recursive = kind != Some(Kind::Thumbnails);
+        let recursive = !matches!(kind, Some(Kind::Thumbnails | Kind::BrowserComponentCache));
         let checked = walk(&root, recursive, 0, control, |file, stamp| {
             let (kind, group) = match kind {
                 Some(Kind::CrashDumps)
@@ -631,6 +636,19 @@ fn discover_known(
                             .file_name()
                             .and_then(|name| name.to_str())
                             .is_some_and(|name| name.starts_with("thumbcache_")) =>
+                {
+                    return;
+                }
+                Some(Kind::BrowserComponentCache)
+                    if !file
+                        .relative
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .is_some_and(|name| {
+                            name == "metadata.json"
+                                || (name.len() == 64
+                                    && name.bytes().all(|byte| byte.is_ascii_hexdigit()))
+                        }) =>
                 {
                     return;
                 }
@@ -657,7 +675,11 @@ fn discover_known(
                 groups.append_to(
                     report,
                     volumes,
-                    (kind == Some(Kind::BrowserCodeCache)).then_some(label),
+                    matches!(
+                        kind,
+                        Some(Kind::BrowserCodeCache | Kind::BrowserComponentCache)
+                    )
+                    .then_some(label),
                 );
                 if control.reason.get().is_some() {
                     ("partial", Some("扫描提前结束。".into()))

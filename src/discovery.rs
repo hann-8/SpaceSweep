@@ -17,6 +17,7 @@ pub enum Kind {
     Thumbnails,
     BrowserCache,
     BrowserCodeCache,
+    BrowserComponentCache,
     NpmCache,
     PipCache,
     OldTemp,
@@ -67,6 +68,10 @@ impl Kind {
             Self::BrowserCodeCache => (
                 "网页代码缓存",
                 "浏览器为网页脚本生成的代码缓存。清理后再次访问网页时可能需要重新编译。",
+            ),
+            Self::BrowserComponentCache => (
+                "浏览器组件更新缓存",
+                "用户数据根目录下缓存的组件更新包及索引。清理后，组件更新时可能需要重新下载。",
             ),
             Self::NpmCache => (
                 "npm 软件包下载缓存",
