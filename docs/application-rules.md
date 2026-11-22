@@ -23,6 +23,19 @@
 | 游戏与驱动的着色器编译产物 | 游戏仍安装时保留。DXCache 等共享或归属未确认的目录只统计占用。仅在证实具体文件属于已卸载游戏、且其他应用未使用时，才作为待审查残留。 |
 | 临时空目录 | 用完整枚举确认当前为空，在明确的生成目录和移除条件下才进入预览。其他空目录可作为发现项。 |
 
+## 已实现的垃圾发现
+
+`scan --discover` 在清理预览前就能识别下列对象。候选用量按实际读到的文件大小或 Windows 查询值汇总。
+
+| 来源 | 发现范围 |
+| --- | --- |
+| 回收站 | 通过 Windows 接口逐盘查询条目数与大小。 [SHQueryRecycleBinW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shqueryrecyclebinw) |
+| 崩溃转储 | 当前用户默认 `CrashDumps` 里的 `.dmp`。深查也识别散落的 `程序.exe.进程号.dmp`，用开头四字节确认 Windows 进程转储格式。 [Windows Error Reporting](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps) · [转储文件头](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_header) |
+| 缩略图缓存 | 资源管理器目录里的 `thumbcache_` 数据库。 [Microsoft 缩略图机制](https://learn.microsoft.com/en-us/windows/win32/shell/thumbnail-providers) · [BleachBit 缩略图路径](https://github.com/bleachbit/bleachbit/blob/master/cleaners/windows_explorer.xml) |
+| 网页缓存 | Chrome、Edge 默认用户数据位置的网页磁盘缓存，包括应用正在运行时读到的占用。 |
+| 软件包缓存 | npm 的 `_cacache`，pip 的 HTTP 和 wheel 缓存。在当前用户默认缓存位置查找。 [npm](https://docs.npmjs.com/cli/cache/) · [pip](https://pip.pypa.io/en/stable/topics/caching/) |
+| 临时产物 | 递归找超过七天的 `.tmp`。记录安装格式或程序名含 Setup、Installer 的线索，以及旁边存在同名目录的压缩包。 |
+
 ## 应用覆盖路线
 
 先支持浏览器磁盘缓存的规则验证，并优先识别 QQ、微信实际占用。以下是逐步覆盖的对象和处理方向。报告以本机版本和路径的实际验证结果为准。

@@ -151,15 +151,7 @@ impl Rule {
             Action::Installers => ["exe", "msi", "msix", "appx", "msixbundle", "appxbundle"]
                 .iter()
                 .any(|ending| extension.eq_ignore_ascii_case(ending)),
-            Action::OldTemp => {
-                let old = now.saturating_sub(SEVEN_DAYS);
-                extension.eq_ignore_ascii_case("tmp")
-                    && ordinary
-                    && stamp.created != 0
-                    && stamp.modified != 0
-                    && stamp.created <= old
-                    && stamp.modified <= old
-            }
+            Action::OldTemp => extension.eq_ignore_ascii_case("tmp") && ordinary && old(stamp, now),
             Action::ChromeHttpCache => {
                 ordinary
                     && file
@@ -217,6 +209,11 @@ pub fn chrome_blockfile_name(name: &str) -> bool {
         || name.strip_prefix("f_").is_some_and(|digits| {
             digits.len() == 6 && digits.bytes().all(|byte| byte.is_ascii_hexdigit())
         })
+}
+
+pub fn old(stamp: Stamp, now: u64) -> bool {
+    let cutoff = now.saturating_sub(SEVEN_DAYS);
+    stamp.created != 0 && stamp.modified != 0 && stamp.created <= cutoff && stamp.modified <= cutoff
 }
 
 pub fn windows_time_now() -> u64 {

@@ -5,6 +5,7 @@ compile_error!("SpaceSweep supports Windows.");
 
 mod checked_file;
 mod cleanup;
+mod discovery;
 mod rules;
 mod scan;
 mod store;
@@ -40,6 +41,9 @@ enum Command {
         /// Analyze each selected volume in addition to the quick checks.
         #[arg(long)]
         deep: bool,
+        /// Find common kinds of junk and look for scattered temporary artifacts.
+        #[arg(long)]
+        discover: bool,
         /// Number of largest files and directories to return in an analysis.
         #[arg(long, default_value_t = 10)]
         top: usize,
@@ -77,6 +81,7 @@ fn main() -> Result<()> {
             volume,
             path,
             deep,
+            discover,
             top,
             max_seconds,
             progress,
@@ -86,6 +91,7 @@ fn main() -> Result<()> {
                     volumes: volume,
                     path,
                     deep,
+                    discover,
                     top,
                     max_seconds,
                     progress,

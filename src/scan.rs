@@ -9,8 +9,9 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
+use crate::discovery::{self, Finding, Groups, Kind};
 use crate::rules::{self, Action, Rule};
-use crate::windows::{self, Location, Stamp, Volume};
+use crate::windows::{self, Folder, Location, Stamp, Volume};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -103,12 +104,6 @@ fn walk(
     'walk: while let Some(directory) = pending.pop() {
         if control.stopped() {
             break;
-        }
-        if directory != *root
-            && let Err(error) = windows::check_directory(&directory)
-        {
-            output.totals.skip(error_reason(&error));
-            continue;
         }
         let entries = match fs::read_dir(directory.native()) {
             Ok(entries) => entries,
@@ -227,6 +222,8 @@ pub struct Report {
     pub volumes: Vec<Volume>,
     pub rules: Vec<RuleReport>,
     pub analysis: Vec<DirectoryReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discovery: Option<discovery::Report>,
     pub elapsed_ms: u64,
     pub cancelled: bool,
     pub stop_reason: Option<StopReason>,
@@ -249,6 +246,7 @@ pub struct Options {
     pub volumes: Vec<PathBuf>,
     pub path: Option<PathBuf>,
     pub deep: bool,
+    pub discover: bool,
     pub top: usize,
     pub max_seconds: Option<u64>,
     pub progress: bool,
@@ -325,6 +323,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         volumes,
         rules: Vec::new(),
         analysis: Vec::new(),
+        discovery: options.discover.then(discovery::Report::default),
         elapsed_ms: 0,
         cancelled: false,
         stop_reason: None,
@@ -337,7 +336,11 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         eprintln!("Volumes discovered: {}", result.volumes.len());
     }
     let now = rules::windows_time_now();
+    let mut covered = Vec::new();
     if focus.is_none() {
+        if let Some(discovery) = &mut result.discovery {
+            discover_recycle_bins(discovery, &result.volumes, &control);
+        }
         // Prevent a Documents location and the same volume-root hint from counting twice.
         let mut seen = HashSet::new();
         for rule in rules::load()? {
@@ -423,6 +426,13 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 result.rules.push(row);
             }
         }
+        if let Some(discovery) = &mut result.discovery {
+            for row in &result.rules {
+                add_rule_finding(discovery, row);
+            }
+            covered = discover_known(discovery, &result.volumes, &control, now, options.progress);
+            discovery.quick_elapsed_ms = Some(started.elapsed().as_millis() as u64);
+        }
     }
     if deep {
         let roots = focus.map_or_else(
@@ -448,14 +458,187 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 options.top,
                 &control,
                 options.progress,
+                result
+                    .discovery
+                    .as_mut()
+                    .map(|report| (report, covered.as_slice(), now)),
             );
             result.analysis.push(report);
         }
+    }
+    if let Some(discovery) = &mut result.discovery {
+        discovery.sort();
     }
     result.cancelled = cancel.load(Ordering::Relaxed);
     result.stop_reason = control.reason.get();
     result.elapsed_ms = started.elapsed().as_millis() as u64;
     Ok(result)
+}
+
+fn discover_recycle_bins(report: &mut discovery::Report, volumes: &[Volume], control: &Control) {
+    for volume in volumes {
+        if control.stopped() {
+            break;
+        }
+        let mount = &volume.mounts[0];
+        let mut check = discovery::Check {
+            label: "回收站",
+            path: mount.clone(),
+            status: "checked",
+            detail: None,
+        };
+        if mount.components().count() != 2 {
+            check.status = "unavailable";
+            check.detail = Some("该卷没有盘符。".into());
+        } else {
+            match windows::recycle_bin(mount) {
+                Ok((0, 0)) => {}
+                Ok((files, bytes)) => report.findings.push(Finding::new(
+                    Kind::RecycleBin,
+                    volume.id.clone(),
+                    mount.clone(),
+                    files,
+                    bytes,
+                )),
+                Err(error) => {
+                    check.status = "unavailable";
+                    check.detail = Some(error.to_string());
+                }
+            }
+        }
+        report.checks.push(check);
+    }
+}
+
+fn add_rule_finding(report: &mut discovery::Report, row: &RuleReport) {
+    let (Some(volume), Some(path), Some(totals)) = (&row.volume_id, &row.root, &row.totals) else {
+        return;
+    };
+    let mut finding = match row.rule_id.as_str() {
+        "chrome.http_cache" | "edge.http_cache" if totals.files > 0 => Finding::new(
+            Kind::BrowserCache,
+            volume.clone(),
+            path.clone(),
+            totals.files,
+            totals.logical_bytes,
+        ),
+        "windows.downloads_installers" if row.matching_files > 0 => Finding::new(
+            Kind::DownloadInstaller,
+            volume.clone(),
+            path.clone(),
+            row.matching_files,
+            row.matching_logical_bytes,
+        ),
+        _ => return,
+    };
+    finding.label = row.label.clone();
+    report.findings.push(finding);
+}
+
+fn discover_known(
+    report: &mut discovery::Report,
+    volumes: &[Volume],
+    control: &Control,
+    now: u64,
+    progress: bool,
+) -> Vec<Location> {
+    let local = match Folder::LocalAppData.known() {
+        Ok(local) => local,
+        Err(error) => {
+            report.checks.push(discovery::Check {
+                label: "当前用户的应用数据",
+                path: PathBuf::new(),
+                status: "unavailable",
+                detail: Some(error.to_string()),
+            });
+            return Vec::new();
+        }
+    };
+    let mut covered = Vec::new();
+    for (label, path, kind) in [
+        ("应用崩溃转储", "CrashDumps", Some(Kind::CrashDumps)),
+        (
+            "Windows 缩略图缓存",
+            "Microsoft/Windows/Explorer",
+            Some(Kind::Thumbnails),
+        ),
+        (
+            "npm 软件包下载缓存",
+            "npm-cache/_cacache",
+            Some(Kind::NpmCache),
+        ),
+        ("pip HTTP 缓存", "pip/Cache/http-v2", Some(Kind::PipCache)),
+        ("pip 旧版 HTTP 缓存", "pip/Cache/http", Some(Kind::PipCache)),
+        ("pip wheel 缓存", "pip/Cache/wheels", Some(Kind::PipCache)),
+        ("用户临时目录", "Temp", None),
+    ] {
+        if control.stopped() {
+            break;
+        }
+        let path = local.join(path);
+        let Some(root) = windows::locate(&path, volumes) else {
+            continue;
+        };
+        if progress {
+            eprintln!("Finding junk in {}", path.display());
+        }
+        let mut groups = Groups::default();
+        let recursive = kind != Some(Kind::Thumbnails);
+        let checked = walk(&root, recursive, 0, control, |file, stamp| {
+            let (kind, group) = match kind {
+                Some(Kind::CrashDumps)
+                    if !discovery::extension(&file.relative).eq_ignore_ascii_case("dmp") =>
+                {
+                    return;
+                }
+                Some(Kind::Thumbnails)
+                    if !discovery::extension(&file.relative).eq_ignore_ascii_case("db")
+                        || !file
+                            .relative
+                            .file_name()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| name.starts_with("thumbcache_")) =>
+                {
+                    return;
+                }
+                Some(kind) => (kind, root.relative.as_path()),
+                None => {
+                    let Some(kind) = discovery::clue(file, stamp, now, true) else {
+                        return;
+                    };
+                    (kind, file.relative.parent().unwrap_or(&root.relative))
+                }
+            };
+            groups.add(kind, group, file, stamp);
+        });
+        let (status, detail) = match checked {
+            Ok(output) => {
+                groups.append_to(report, volumes);
+                if control.reason.get().is_some() {
+                    ("partial", Some("扫描提前结束。".into()))
+                } else {
+                    if recursive {
+                        covered.push(root);
+                    }
+                    if output.totals.skipped.is_empty() {
+                        ("checked", None)
+                    } else {
+                        let count = output.totals.skipped.values().sum::<u64>();
+                        ("partial", Some(format!("跳过 {count} 项。")))
+                    }
+                }
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => ("not_found", None),
+            Err(error) => ("unavailable", Some(error.to_string())),
+        };
+        report.checks.push(discovery::Check {
+            label,
+            path,
+            status,
+            detail,
+        });
+    }
+    covered
 }
 
 fn analyze(
@@ -464,6 +647,7 @@ fn analyze(
     top: usize,
     control: &Control<'_>,
     progress: bool,
+    discovery: Option<(&mut discovery::Report, &[Location], u64)>,
 ) -> DirectoryReport {
     let display = windows::view(root, volumes);
     if progress {
@@ -479,7 +663,19 @@ fn analyze(
         stop_reason: None,
         error: None,
     };
-    match walk(root, true, top, control, |_, _| {}) {
+    let mut groups = Groups::default();
+    match walk(root, true, top, control, |file, stamp| {
+        if let Some((_, covered, now)) = &discovery
+            && let Some(kind) = discovery::clue(file, stamp, *now, false)
+            && !file.relative.starts_with("$Recycle.Bin")
+            && !covered
+                .iter()
+                .any(|area| area.volume == file.volume && file.relative.starts_with(&area.relative))
+            && let Some(parent) = file.relative.parent()
+        {
+            groups.add(kind, parent, file, stamp);
+        }
+    }) {
         Ok(output) => {
             report.stop_reason = control.reason.get();
             report.status = if report.stop_reason.is_some() || !output.totals.skipped.is_empty() {
@@ -515,6 +711,9 @@ fn analyze(
         }
         Err(error) => report.error = Some(error.to_string()),
     }
+    if let Some((discovery, _, _)) = discovery {
+        groups.append_to(discovery, volumes);
+    }
     report
 }
 
@@ -537,6 +736,7 @@ mod tests {
                 volumes: Vec::new(),
                 path: Some(fixture.path().to_owned()),
                 deep: false,
+                discover: false,
                 top: 1,
                 max_seconds: None,
                 progress: false,
@@ -557,6 +757,50 @@ mod tests {
     }
 
     #[test]
+    fn discovery_finds_temporary_artifacts_without_counting_other_files() {
+        let fixture = tempfile::tempdir().unwrap();
+        let temp = fixture.path().join("临时文件");
+        fs::create_dir(&temp).unwrap();
+        fs::create_dir(temp.join("package")).unwrap();
+        fs::write(temp.join("package.zip"), [0; 20]).unwrap();
+        fs::write(temp.join("backup.zip"), [0; 100]).unwrap();
+        fs::write(temp.join("ExampleSetup.exe"), [0; 30]).unwrap();
+        fs::write(temp.join("Example.exe.123.dmp"), [0; 40]).unwrap();
+        fs::write(temp.join("Example.exe.124.dmp"), b"MDMP signature sample").unwrap();
+        fs::write(temp.join("shader.bin"), [0; 1000]).unwrap();
+
+        let report = run(
+            Options {
+                volumes: Vec::new(),
+                path: Some(temp),
+                deep: false,
+                discover: true,
+                top: 0,
+                max_seconds: None,
+                progress: false,
+            },
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        let discoveries = report.discovery.unwrap();
+        let found: Vec<_> = discoveries
+            .findings
+            .iter()
+            .map(|row| (row.kind, row.bytes))
+            .collect();
+        assert_eq!(
+            found,
+            [
+                (Kind::Minidump, 21),
+                (Kind::TempInstaller, 30),
+                (Kind::ArchiveWithDirectory, 20),
+                (Kind::DumpClue, 40)
+            ]
+        );
+        assert!(report.candidates.is_empty());
+    }
+
+    #[test]
     fn an_expired_analysis_reports_partial_coverage() {
         let fixture = tempfile::tempdir().unwrap();
         fs::write(fixture.path().join("fixture.bin"), [1, 2]).unwrap();
@@ -567,7 +811,7 @@ mod tests {
             deadline: Some(Instant::now()),
             reason: Cell::new(None),
         };
-        let report = analyze(&root, &volumes, 3, &control, false);
+        let report = analyze(&root, &volumes, 3, &control, false, None);
         assert_eq!(report.status, "partial");
         assert_eq!(report.stop_reason, Some(StopReason::TimeLimit));
         assert_eq!(report.totals.unwrap().files, 0);

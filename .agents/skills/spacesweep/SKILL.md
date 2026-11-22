@@ -1,19 +1,19 @@
 ---
 name: spacesweep
-description: Inspect and clean local Windows storage. Use for disk usage, space hogs, old temporary files, and verified app caches across the user's local drives. Produces a preview and applies the confirmed plan.
+description: Find and clean junk across local Windows drives, including stale temporary files, app caches, crash dumps, and recycled items. Reports what it found and applies approved cleanup plans.
 ---
 
 # SpaceSweep
 
 在 SpaceSweep 仓库根目录用 `.\scripts\spacesweep.ps1` 启动。每个阶段输出 JSON，并自动生成本地 HTML。二进制缺失或代码已更新时，运行 `.\scripts\build.ps1`。参数示例见 [使用说明](../../../docs/usage.md)，操作约束见 [清理边界](../../../docs/boundaries.md)。
 
-## 扫描和诊断
+## 找垃圾
 
 1. 明确用户的范围和保留条件。「检查」和一般空间诊断走只读扫描。日常清理默认覆盖已挂载的所有本地数据卷，目标是尽量处理有证据的候选。用户主动给了容量目标时，按对应的盘核算。
-2. 先执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--progress')`。记下返回的 `session_dir`。用 `-Arguments @('--volume','D:')` 限定盘。要补查目录时，用 `.\scripts\spacesweep.ps1 Analyze -SessionDir $session -Arguments @('--path',$path)`，更新后的报告会包含同轮的目录分析。
-3. 对有意义的遗漏定向查找。可以结合目录用量、本地应用信息和官方资料解释归属。QQ、微信数据、安装包线索和未知用途目录属于发现项。清理资格来自执行器认可的规则。用量大、规则未覆盖的应用给出有依据的应用内入口或继续检查的位置。
+2. 先执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--discover','--progress')`。先报 `discovery.findings` 里的实际垃圾类别、体积和来源。用户要求全盘仔细找或尽量找齐时，加 `--deep`，或用同一会话的 `Analyze -Arguments @('--path',$path,'--discover','--max-seconds','20')` 对相应盘补查。`--volume D:` 可限定单盘。
+3. 优先追查可能漏掉的垃圾，例如迁移过的应用缓存、已完成更新的安装包、临时任务中间产物。看生成程序、应用设置和实际文件构成。带 `identified: false` 的是待核实线索。QQ、微信文件和未知用途的大目录需先查具体数据类型。
 
-用户怀疑快查遗漏时，对有关的盘用 `Analyze -Arguments @('--path','D:\','--max-seconds','20')` 等命令逐盘深查。检查 `status`、`stop_reason` 和跳过原因。快查覆盖各盘的已知位置。可访问目录遍历完成后，仍需核对用途、清理规则和跳过的范围。
+用 `discovery.checks`、`status` 和 `stop_reason` 交代实际查到的范围。汇报清理预览前，先告诉用户这次找到了什么。
 
 游戏仍安装时，着色器编译产物作为在用数据保留。DXCache 等共享或归属未确认的缓存只展示占用。依据具体游戏的安装和使用证据判断是否为残留。
 

@@ -72,6 +72,7 @@ $analyses = @(
     foreach ($inputPath in $AnalysisJson) { Read-ReportData $inputPath }
 )
 $areas = @($analyses | ForEach-Object { $_.analysis } | Where-Object { $_ })
+$discoveries = @($analyses | ForEach-Object { $_.discovery } | Where-Object { $_ })
 
 function Get-CoverageLabel($Volume) {
     $roots = @($Volume.mounts | ForEach-Object { $_.TrimEnd([char[]]@('\', '/')) })
@@ -147,12 +148,59 @@ footer { color:var(--muted); border-top:1px solid var(--line); margin-top:26px; 
 <body><main>
 <header>
 <h1>SpaceSweep 磁盘空间报告</h1>
-<p class="muted">查看扫描时的磁盘容量、清理预览和目录占用。</p>
-<nav aria-label="报告导航"><a href="#volumes">磁盘容量</a><a href="#preview">清理预览</a><a href="#directories">目录排行</a><a href="#known">已知位置</a></nav>
-</header>
-<section id="volumes"><h2>磁盘容量</h2><div class="grid">
+<nav aria-label="报告导航">
 '@
 
+if ($discoveries.Count) { Add-Section '<a href="#junk">垃圾发现</a>' }
+Add-Section '<a href="#volumes">磁盘容量</a><a href="#preview">清理预览</a><a href="#directories">目录排行</a><a href="#known">已知位置</a></nav></header>'
+
+if ($discoveries.Count) {
+    $findings = @($discoveries.findings | Group-Object -Property kind,path | ForEach-Object { $_.Group[-1] })
+    $identified = @($findings | Where-Object identified)
+    $clues = @($findings | Where-Object { !$_.identified })
+    $total = Format-Bytes (($identified | Measure-Object bytes -Sum).Sum)
+    $count = Format-Count (($identified | Measure-Object files -Sum).Sum)
+    $elapsed = Format-Count ($analyses[-1].elapsed_ms)
+    Add-Section "<section id='junk'><h2>垃圾发现</h2><p class='summary'>$count 项 · $total</p><p class='muted'>已识别项目的文件大小与回收站用量 · 最近一次扫描 $elapsed ms</p>"
+    foreach ($collection in @(@{ Label = '已识别的垃圾'; Rows = $identified; Open = ' open' }, @{ Label = '待核实的残留线索'; Rows = $clues; Open = '' })) {
+        $groups = Format-Count $collection.Rows.Count
+        Add-Section "<details$($collection.Open)><summary>$($collection.Label) · $groups 组</summary>"
+        if ($collection.Rows.Count) {
+            Add-Section '<div class="table-wrap"><table><thead><tr><th>类别与位置</th><th>大小</th><th>条目</th><th>发现依据</th></tr></thead><tbody>'
+            foreach ($finding in ($collection.Rows | Sort-Object bytes -Descending)) {
+                $label = Escape-Html $finding.label
+                $location = Escape-Html $finding.path
+                $size = Format-Bytes $finding.bytes
+                $items = Format-Count $finding.files
+                $evidence = Escape-Html $finding.evidence
+                $examples = Escape-Html ($finding.examples -join ' · ')
+                Add-Section "<tr><td>$label<br><small class='muted path'>$location</small></td><td class='bytes'>$size</td><td class='bytes'>$items</td><td>$evidence<br><small class='muted path'>$examples</small></td></tr>"
+            }
+            Add-Section '</tbody></table></div>'
+        }
+        Add-Section '</details>'
+    }
+    $checks = @($discoveries.checks | Where-Object { $_ })
+    if ($checks.Count) {
+        Add-Section '<details><summary>垃圾快查范围</summary><ul class="files">'
+        foreach ($check in $checks) {
+            $label = Escape-Html $check.label
+            $location = Escape-Html $check.path
+            $status = switch ($check.status) {
+                'checked' { '已查' }
+                'not_found' { '位置不存在' }
+                'partial' { '部分覆盖' }
+                default { '无法查到' }
+            }
+            $detail = Escape-Html $check.detail
+            Add-Section "<li>$label · <span class='path'>$location</span> · $status $detail</li>"
+        }
+        Add-Section '</ul></details>'
+    }
+    Add-Section '</section>'
+}
+
+Add-Section '<section id="volumes"><h2>磁盘容量</h2><div class="grid">'
 foreach ($volume in $scan.volumes) {
     $mount = [string]$volume.mounts[0]
     $name = Escape-Html $mount

@@ -20,7 +20,7 @@ use windows_sys::Win32::System::Diagnostics::ToolHelp::{
 };
 use windows_sys::Win32::UI::Shell::{
     FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_ProgramFiles,
-    FOLDERID_ProgramFilesX86, SHGetKnownFolderPath,
+    FOLDERID_ProgramFilesX86, SHGetKnownFolderPath, SHQUERYRBINFO, SHQueryRecycleBinW,
 };
 
 pub const DIRECTORY: u32 = 0x10;
@@ -47,6 +47,21 @@ impl Volume {
 pub struct Space {
     pub total_bytes: u64,
     pub available_bytes: u64,
+}
+
+pub fn recycle_bin(mount: &Path) -> io::Result<(u64, u64)> {
+    let mut info = SHQUERYRBINFO {
+        cbSize: size_of::<SHQUERYRBINFO>() as u32,
+        ..Default::default()
+    };
+    let path = wide(mount)?;
+    let status = unsafe { SHQueryRecycleBinW(path.as_ptr(), &mut info) };
+    if status != 0 {
+        return Err(io::Error::other(format!(
+            "SHQueryRecycleBinW: 0x{status:08X}"
+        )));
+    }
+    Ok((info.i64NumItems.max(0) as u64, info.i64Size.max(0) as u64))
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]

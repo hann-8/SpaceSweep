@@ -11,11 +11,15 @@
 从仓库根执行。所有命令的结果是 JSON，`--progress` 的进度走标准错误。
 
 ```powershell
+.\target\release\spacesweep.exe scan --discover
+.\target\release\spacesweep.exe scan --discover --deep --progress
 .\target\release\spacesweep.exe scan --progress
 .\target\release\spacesweep.exe scan --volume D:
 .\target\release\spacesweep.exe scan --path 'D:\待分析目录' --top 10
 .\target\release\spacesweep.exe scan --volume E: --deep --max-seconds 20
 ```
+
+`--discover` 查各盘回收站、常用缓存和临时产物，输出 `discovery.findings`。每组包含盘、路径、类别、条目数、大小和依据。`identified: true` 表示已认出用途，安装包和压缩包等线索有单独明细。加 `--deep` 会在逐盘枚举时识别更多散落的转储和临时产物。 `discovery.quick_elapsed_ms` 记录完成已知来源用时，`elapsed_ms` 记录本次总耗时。
 
 快查会列出已挂载本地盘，并检查支持的路径。目录分析按文件属性统计。使用 `--max-seconds` 可限制一轮扫描。到达时限时输出已经走到的范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
 
@@ -44,9 +48,9 @@
 项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告显示每个盘的覆盖情况，预览和执行阶段分别加上本轮计划和复测数据。
 
 ```powershell
-$scan = .\scripts\spacesweep.ps1 Scan | ConvertFrom-Json
+$scan = .\scripts\spacesweep.ps1 Scan -Arguments @('--discover') | ConvertFrom-Json
 $analysis = .\scripts\spacesweep.ps1 Analyze -SessionDir $scan.session_dir `
-    -Arguments @('--path','D:\','--max-seconds','20') | ConvertFrom-Json
+    -Arguments @('--path','D:\','--discover','--max-seconds','20') | ConvertFrom-Json
 $analysis.report_file
 ```
 
