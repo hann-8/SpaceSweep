@@ -23,11 +23,14 @@
 
 快查会列出已挂载本地盘，并检查支持的路径。目录分析按文件属性统计。使用 `--max-seconds` 可限制一轮扫描。到达时限时输出已经走到的范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
 
-有可预览项时，扫描返回 `scan_id`。将它填入预览命令。预览可按规则、盘或准确路径排除，也可重复传入多个 `--scan`。
+有可预览项时，扫描返回 `scan_id`。将它填入预览命令。预览可按审核组、规则、盘或准确路径筛选，也可重复传入多个 `--scan`。
 
 ```powershell
 .\target\release\spacesweep.exe plan --scan '<scan_id>' --exclude-rule chrome.http_cache
+.\target\release\spacesweep.exe plan --scan '<scan_id>' --include-group '<feature.id>' --exclude-group '<purpose.id>'
 ```
+
+`--include-group` 选中对应软件、功能或用途下可处理的候选，可重复传入。`--exclude-group` 保留指定子组，排除优先。节点 ID 从所用扫描的 `discovery.findings[].review` 中读取，分别是 `owner.id`、`feature.id` 和 `purpose.id`。预览按实际纳入的候选列出用途、影响和预计占用。
 
 检查预览的分组和 `plan_file` 明细。想执行这份明确的永久删除计划时，在标准用户终端使用返回的 `plan_id`。
 
@@ -48,7 +51,9 @@
 
 ## 本地可视化报告
 
-项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告首屏显示红、黄、绿各级的条目数和大小，点对应卡片可以定位明细。预览和执行阶段分别加上本轮计划和复测数据。
+项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告首屏显示红、黄、绿各级的条目数和大小，点对应卡片可以定位明细。
+
+黄色审核先按软件或系统归属展示，再显示可独立决定的清理项。同一功能中有不同用途时，可以展开按子项选择，例如网页资源与脚本缓存。每项说明用途、清理影响和当前可进预览的数量，多个目录的合计大小放在同一项下。想核对时展开位置和依据。可直接告诉 Agent「处理内置网页缓存，保留脚本缓存」。预览和执行阶段分别加上本轮计划和复测数据。
 
 ```powershell
 $scan = .\scripts\spacesweep.ps1 Scan -Arguments @('--discover') | ConvertFrom-Json

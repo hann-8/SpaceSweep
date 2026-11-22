@@ -8,6 +8,7 @@ use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
 use crate::checked_file::{CheckedFile, Identity, is_busy};
+use crate::review::{Node, Review};
 use crate::rules::{self, Action, RULES_TEXT, Rule};
 use crate::scan::{Candidate, Report};
 use crate::store::{Store, digest};
@@ -17,6 +18,29 @@ use crate::windows::{self, Location, Volume};
 struct Snapshot {
     rules: String,
     candidates: Vec<Candidate>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    review_groups: Vec<ScopedReview>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct ScopedReview {
+    review: Review,
+    target: Option<ReviewTarget>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct ReviewTarget {
+    rule_id: String,
+    root: Location,
+}
+
+impl ReviewTarget {
+    fn contains(&self, candidate: &Candidate) -> bool {
+        self.rule_id == candidate.rule_id
+            && self.root.volume == candidate.location.volume
+            && windows::relative_to(&candidate.location.relative, &self.root.relative)
+                .is_some_and(|relative| relative.components().count() == 1)
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -71,9 +95,26 @@ fn eligible<'a>(
 }
 
 pub fn save_scan(store: &Store, report: &mut Report) -> Result<()> {
+    let review_groups = report
+        .discovery
+        .iter()
+        .flat_map(|discovery| &discovery.findings)
+        .filter_map(|finding| {
+            let review = finding.review.clone()?;
+            let target = finding.preview.as_ref().and_then(|preview| {
+                let root = windows::locate(&finding.path, &report.volumes)?;
+                Some(ReviewTarget {
+                    rule_id: preview.rule_id.clone(),
+                    root,
+                })
+            });
+            Some(ScopedReview { review, target })
+        })
+        .collect();
     let snapshot = Snapshot {
         rules: digest(RULES_TEXT.as_bytes()),
         candidates: std::mem::take(&mut report.candidates),
+        review_groups,
     };
     let (id, path) = store.write("scan", &snapshot)?;
     report.scan_id = Some(id);
@@ -90,6 +131,8 @@ struct Group {
     logical_bytes: u64,
     allocated_bytes: u64,
     note: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    review: Option<Review>,
 }
 
 #[derive(Debug, Serialize)]
@@ -100,29 +143,86 @@ pub struct Preview {
     groups: Vec<Group>,
     not_included: BTreeMap<String, u64>,
     files: usize,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    include_groups: Vec<Node>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    exclude_groups: Vec<Node>,
 }
 
 pub struct Selections {
     pub scans: Vec<String>,
+    pub include_group: Vec<String>,
+    pub exclude_group: Vec<String>,
     pub exclude_rule: Vec<String>,
     pub exclude_volume: Vec<PathBuf>,
     pub exclude_file: Vec<PathBuf>,
 }
 
+fn resolve_groups(ids: &[String], groups: &[ScopedReview]) -> Result<Vec<Node>> {
+    ids.iter()
+        .map(|id| {
+            groups
+                .iter()
+                .find_map(|group| group.review.selection(id))
+                .with_context(|| format!("unknown review group {id} in the supplied scans"))
+        })
+        .collect()
+}
+
+fn review_exclusion(
+    review: Option<&Review>,
+    include: &[Node],
+    exclude: &[Node],
+) -> Option<&'static str> {
+    let matches = |groups: &[Node]| {
+        review.is_some_and(|review| groups.iter().any(|group| review.contains(&group.id)))
+    };
+    if !include.is_empty() && !matches(include) {
+        Some("outside_review_selection")
+    } else if matches(exclude) {
+        Some("excluded")
+    } else {
+        None
+    }
+}
+
 pub fn plan(store: &Store, selections: Selections, cancel: &AtomicBool) -> Result<Preview> {
     let volumes = windows::volumes()?;
     let ready = ready_rules(&volumes)?;
+    build_preview(store, selections, &volumes, &ready, cancel)
+}
+
+fn build_preview(
+    store: &Store,
+    selections: Selections,
+    volumes: &[Volume],
+    ready: &HashMap<String, ReadyRule>,
+    cancel: &AtomicBool,
+) -> Result<Preview> {
     let rule_digest = digest(RULES_TEXT.as_bytes());
     let mut candidates = Vec::new();
+    let mut review_groups = Vec::new();
     for scan in selections.scans {
         let saved: Snapshot = store.read("scan", &scan)?;
         ensure!(saved.rules == rule_digest, "rules changed; run a new scan");
         candidates.extend(saved.candidates);
+        review_groups.extend(saved.review_groups);
     }
+    let include_groups = resolve_groups(&selections.include_group, &review_groups)?;
+    let exclude_groups = resolve_groups(&selections.exclude_group, &review_groups)?;
+    let targets: Vec<_> = review_groups
+        .iter()
+        .filter_map(|group| Some((group.target.as_ref()?, &group.review)))
+        .collect();
+    let review_for = |candidate: &Candidate| {
+        targets
+            .iter()
+            .find_map(|(target, review)| target.contains(candidate).then_some(*review))
+    };
     let mut excluded_volumes = HashSet::new();
     for input in selections.exclude_volume {
         let input = windows::scope_path(&input)?;
-        let location = windows::locate(&input, &volumes).context("unknown excluded volume")?;
+        let location = windows::locate(&input, volumes).context("unknown excluded volume")?;
         ensure!(
             location.relative.as_os_str().is_empty(),
             "--exclude-volume requires a mount point"
@@ -134,7 +234,7 @@ pub fn plan(store: &Store, selections: Selections, cancel: &AtomicBool) -> Resul
         .into_iter()
         .map(|p| {
             let input = windows::scope_path(&p)?;
-            windows::locate(&input, &volumes).context("excluded file is not on a local volume")
+            windows::locate(&input, volumes).context("excluded file is not on a local volume")
         })
         .collect::<Result<Vec<_>>>()?;
     let mut not_included = BTreeMap::new();
@@ -146,6 +246,12 @@ pub fn plan(store: &Store, selections: Selections, cancel: &AtomicBool) -> Resul
             anyhow::bail!("plan cancelled");
         }
         let location = &candidate.location;
+        if let Some(reason) =
+            review_exclusion(review_for(&candidate), &include_groups, &exclude_groups)
+        {
+            count(&mut not_included, reason);
+            continue;
+        }
         if selections.exclude_rule.contains(&candidate.rule_id)
             || excluded_volumes.contains(&location.volume)
             || excluded_files.iter().any(|excluded| {
@@ -157,7 +263,7 @@ pub fn plan(store: &Store, selections: Selections, cancel: &AtomicBool) -> Resul
             count(&mut not_included, "excluded");
             continue;
         }
-        let item = match prepare_item(candidate, &ready, &volumes, now) {
+        let item = match prepare_item(candidate, ready, volumes, now) {
             Ok(item) => item,
             Err(reason) => {
                 count(&mut not_included, reason);
@@ -190,13 +296,19 @@ pub fn plan(store: &Store, selections: Selections, cancel: &AtomicBool) -> Resul
             .find(|v| v.id == candidate.location.volume)
             .unwrap();
         let rule = &ready[&candidate.rule_id].rule;
+        let review = review_for(candidate);
         let group = groups
-            .entry((&candidate.rule_id, &candidate.location.volume))
+            .entry((
+                &candidate.rule_id,
+                &candidate.location.volume,
+                review.map(|review| &review.purpose.id),
+            ))
             .or_insert_with(|| Group {
                 rule_id: rule.id.clone(),
                 label: rule.label.clone(),
                 note: rule.note.clone(),
                 volume: volume.mounts[0].clone(),
+                review: review.cloned(),
                 ..Default::default()
             });
         group.files += 1;
@@ -219,6 +331,8 @@ pub fn plan(store: &Store, selections: Selections, cancel: &AtomicBool) -> Resul
         groups,
         not_included,
         files,
+        include_groups,
+        exclude_groups,
     })
 }
 
@@ -477,6 +591,88 @@ mod tests {
             location,
             stamp,
         }
+    }
+
+    #[test]
+    fn review_selection_keeps_other_scopes_and_excluded_children_out_of_the_plan() {
+        let fixture = tempfile::tempdir().unwrap();
+        let store = Store::open(Some(fixture.path())).unwrap();
+        let volumes = windows::volumes().unwrap();
+        let rule = rules::load()
+            .unwrap()
+            .into_iter()
+            .find(|rule| rule.action == Action::OldTemp)
+            .unwrap();
+        let old = SystemTime::now() - Duration::from_secs(9 * 24 * 60 * 60);
+        let roots: Vec<_> = ["resources", "scripts", "other"]
+            .into_iter()
+            .map(|name| {
+                let directory = fixture.path().join(name);
+                fs::create_dir(&directory).unwrap();
+                write_old(&directory.join("sample.tmp"), &[0; 32], old);
+                windows::locate(&directory, &volumes).unwrap()
+            })
+            .collect();
+        let node = |id: &str| Node {
+            id: id.into(),
+            label: id.into(),
+        };
+        let review = |purpose: &str| Review {
+            owner: node("example"),
+            feature: node("example/web"),
+            purpose: node(purpose),
+            usage: String::new(),
+            impact: String::new(),
+        };
+        let review_groups: Vec<_> = ["example/web/resources", "example/web/scripts"]
+            .into_iter()
+            .zip(&roots)
+            .map(|(purpose, root)| ScopedReview {
+                review: review(purpose),
+                target: Some(ReviewTarget {
+                    rule_id: rule.id.clone(),
+                    root: root.clone(),
+                }),
+            })
+            .collect();
+        assert!(resolve_groups(&["example/typo".into()], &review_groups).is_err());
+        let snapshot = Snapshot {
+            rules: digest(RULES_TEXT.as_bytes()),
+            candidates: roots
+                .iter()
+                .map(|root| from_fixture(&rule, root, "sample.tmp"))
+                .collect(),
+            review_groups,
+        };
+        let (scan, _) = store.write("scan", &snapshot).unwrap();
+        let ready = HashMap::from([(rule.id.clone(), ReadyRule { rule, roots })]);
+        let preview = build_preview(
+            &store,
+            Selections {
+                scans: vec![scan],
+                include_group: vec!["example/web".into()],
+                exclude_group: vec!["example/web/scripts".into()],
+                exclude_rule: Vec::new(),
+                exclude_volume: Vec::new(),
+                exclude_file: Vec::new(),
+            },
+            &volumes,
+            &ready,
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        assert_eq!(preview.files, 1);
+        assert_eq!(preview.not_included["excluded"], 1);
+        assert_eq!(preview.not_included["outside_review_selection"], 1);
+        let saved: Plan = store.read("plan", &preview.plan_id).unwrap();
+        assert_eq!(
+            saved.items[0].path,
+            fixture.path().join("resources/sample.tmp")
+        );
+        assert_eq!(
+            preview.groups[0].review.as_ref().unwrap().purpose.id,
+            "example/web/resources"
+        );
     }
 
     #[test]

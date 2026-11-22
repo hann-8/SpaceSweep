@@ -497,6 +497,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         }
     }
     if let Some(discovery) = &mut result.discovery {
+        crate::review::annotate(&mut discovery.findings);
         discovery.sort();
     }
     result.cancelled = cancel.load(Ordering::Relaxed);
@@ -562,6 +563,13 @@ fn add_rule_finding(report: &mut discovery::Report, row: &RuleReport) {
         _ => return,
     };
     finding.label = row.label.clone();
+    if row.action.can_delete() {
+        finding.preview = Some(discovery::PreviewSource {
+            rule_id: row.rule_id.clone(),
+            files: row.eligible_files,
+            blocked_by: row.blocked_by.clone(),
+        });
+    }
     report.findings.push(finding);
 }
 

@@ -20,7 +20,8 @@ use windows_sys::Win32::System::Diagnostics::ToolHelp::{
 };
 use windows_sys::Win32::UI::Shell::{
     FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_ProgramFiles,
-    FOLDERID_ProgramFilesX86, SHGetKnownFolderPath, SHQUERYRBINFO, SHQueryRecycleBinW,
+    FOLDERID_ProgramFilesX86, FOLDERID_RoamingAppData, SHGetKnownFolderPath, SHQUERYRBINFO,
+    SHQueryRecycleBinW,
 };
 
 pub const DIRECTORY: u32 = 0x10;
@@ -401,6 +402,7 @@ pub fn volumes() -> io::Result<Vec<Volume>> {
 #[serde(rename_all = "snake_case")]
 pub enum Folder {
     LocalAppData,
+    RoamingAppData,
     Documents,
     Downloads,
     ProgramFiles,
@@ -412,6 +414,7 @@ impl Folder {
     pub fn known(self) -> io::Result<PathBuf> {
         let id = match self {
             Self::LocalAppData => &FOLDERID_LocalAppData,
+            Self::RoamingAppData => &FOLDERID_RoamingAppData,
             Self::Documents => &FOLDERID_Documents,
             Self::Downloads => &FOLDERID_Downloads,
             Self::ProgramFiles => &FOLDERID_ProgramFiles,

@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
+use crate::review::Review;
 use crate::rules;
 use crate::windows::{self, Location, Stamp, Volume};
 
@@ -122,6 +123,17 @@ pub struct Finding {
     pub files: u64,
     pub bytes: u64,
     pub examples: Vec<PathBuf>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub review: Option<Review>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preview: Option<PreviewSource>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PreviewSource {
+    pub rule_id: String,
+    pub files: u64,
+    pub blocked_by: Option<String>,
 }
 
 impl Finding {
@@ -139,6 +151,8 @@ impl Finding {
             files,
             bytes,
             examples: Vec::new(),
+            review: None,
+            preview: None,
         }
     }
 }

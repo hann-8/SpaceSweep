@@ -64,6 +64,87 @@ function Get-ReasonLabel([string]$Code) {
     }
 }
 
+function Add-FindingTable($Rows) {
+    Add-Section '<div class="table-wrap"><table><thead><tr><th>类别与位置</th><th>大小</th><th>条目</th><th>发现依据</th></tr></thead><tbody>'
+    foreach ($finding in ($Rows | Sort-Object bytes -Descending)) {
+        $label = Escape-Html $finding.label
+        $location = Escape-Html $finding.path
+        $size = Format-Bytes $finding.bytes
+        $items = Format-Count $finding.files
+        $evidence = Escape-Html $finding.evidence
+        $examples = Escape-Html ($finding.examples -join ' · ')
+        Add-Section "<tr><td>$label<br><small class='muted path'>$location</small></td><td class='bytes'>$size</td><td class='bytes'>$items</td><td>$evidence<br><small class='muted path'>$examples</small></td></tr>"
+    }
+    Add-Section '</tbody></table></div>'
+}
+
+function Get-ReviewBranches($Rows, [string]$Level) {
+    $Rows | Group-Object -Property { $_.review.$Level.id } |
+        Sort-Object -Property @{ Expression = { ($_.Group | Measure-Object bytes -Sum).Sum }; Descending = $true }, Name
+}
+
+function Get-PreviewCount($Rows) {
+    [long](($Rows | ForEach-Object { $_.preview.files } | Measure-Object -Sum).Sum)
+}
+
+function Format-ReviewTotals($Rows, [switch]$ShowPreview) {
+    $size = Format-Bytes (($Rows | Measure-Object bytes -Sum).Sum)
+    $files = Format-Count (($Rows | Measure-Object files -Sum).Sum)
+    $totals = "$size · $files 项"
+    if ($ShowPreview) {
+        $available = Get-PreviewCount $Rows
+        if ($available -gt 0) { $totals += " · $(Format-Count $available) 项可进预览" }
+    }
+    $totals
+}
+
+function Add-ReviewPurpose($Rows) {
+    $review = $Rows[0].review
+    $id = Escape-Html $review.purpose.id
+    $label = Escape-Html $review.purpose.label
+    $totals = Format-ReviewTotals $Rows
+    $usage = Escape-Html $review.usage
+    $impact = Escape-Html $review.impact
+    $available = Get-PreviewCount $Rows
+    $blockers = @($Rows | ForEach-Object {
+        if ($_.preview.blocked_by) { Get-ReasonLabel $_.preview.blocked_by }
+    } | Sort-Object -Unique)
+    $status = if ($available -gt 0) { "$(Format-Count $available) 项可进预览" }
+        elseif ($blockers.Count) { '当前不可进预览，' + ($blockers -join '、') }
+        else { '当前仅供审核' }
+    $locations = Format-Count $Rows.Count
+    Add-Section "<div class='review-purpose' data-review-group='$id'><h4>$label <small class='muted numbers'>$totals</small></h4>"
+    Add-Section "<dl><dt>用途</dt><dd>$usage</dd><dt>清理后</dt><dd>$impact</dd><dt>处理状态</dt><dd>$(Escape-Html $status)</dd></dl>"
+    Add-Section "<details><summary>位置和依据 · $locations 处</summary>"
+    Add-FindingTable $Rows
+    Add-Section '</details></div>'
+}
+
+function Add-ReviewTree($Rows) {
+    Add-Section '<p class="muted">可告诉 Agent 要处理哪个软件或清理项，以及要保留的子项。</p><div class="review-tree">'
+    foreach ($owner in (Get-ReviewBranches $Rows 'owner')) {
+        $node = $owner.Group[0].review.owner
+        $id = Escape-Html $node.id
+        $label = Escape-Html $node.label
+        $totals = Format-ReviewTotals $owner.Group -ShowPreview
+        Add-Section "<details class='review-owner' data-review-group='$id'><summary>$label <small class='muted numbers'>$totals</small></summary>"
+        foreach ($feature in (Get-ReviewBranches $owner.Group 'feature')) {
+            $purposes = @(Get-ReviewBranches $feature.Group 'purpose')
+            if ($purposes.Count -gt 1) {
+                $node = $feature.Group[0].review.feature
+                $id = Escape-Html $node.id
+                $label = Escape-Html $node.label
+                $totals = Format-ReviewTotals $feature.Group -ShowPreview
+                Add-Section "<details class='review-feature' data-review-group='$id' open><summary>$label <small class='muted numbers'>$totals</small></summary>"
+            }
+            foreach ($purpose in $purposes) { Add-ReviewPurpose $purpose.Group }
+            if ($purposes.Count -gt 1) { Add-Section '</details>' }
+        }
+        Add-Section '</details>'
+    }
+    Add-Section '</div>'
+}
+
 $scan = Read-ReportData $ScanJson
 if ($null -eq $scan.schema_version -or $null -eq $scan.volumes) {
     throw 'ScanJson must be the JSON output of the SpaceSweep scan command.'
@@ -152,6 +233,13 @@ details { padding:11px 15px; margin:8px 0; }
 details details { background:#f9fbfb; }
 summary { cursor:pointer; font-weight:650; }
 .files { margin:8px 0; padding-left:22px; }
+.review-tree summary small,.review-purpose h4 small { margin-inline-start:8px; font-weight:400; }
+.review-purpose { border-top:1px solid var(--line); padding-top:8px; margin-top:8px; }
+.review-purpose h4 { margin:0; font-size:15px; }
+.review-purpose dl { display:grid; grid-template-columns:max-content 1fr; gap:2px 12px; margin:6px 0; }
+.review-purpose dt { color:var(--muted); }
+.review-purpose dd { margin:0; }
+.review-purpose details summary { font-size:13px; color:var(--muted); }
 small { font-size:13px; }
 footer { color:var(--muted); border-top:1px solid var(--line); margin-top:26px; padding-top:12px; }
 @media (max-width:580px) { main { padding:22px 12px 32px; } .grid { grid-template-columns:1fr; } table { min-width:480px; } }
@@ -169,9 +257,15 @@ Add-Section '<a href="#volumes">磁盘容量</a><a href="#preview">清理预览<
 if ($discoveries.Count) {
     $byLocation = @{}
     foreach ($discovery in $discoveries) {
-        foreach ($group in ($discovery.findings | Group-Object -Property kind,path)) {
+        foreach ($group in ($discovery.findings | Group-Object -Property { $_.kind + '|' + $_.path.Replace('/', '\') })) {
             $previous = $byLocation[$group.Name]
             if (($previous.review_level -contains 'confirmed') -and ($group.Group.review_level -notcontains 'confirmed')) { continue }
+            $previousPreview = $previous | Where-Object preview | Select-Object -First 1
+            if ($previousPreview) {
+                foreach ($finding in ($group.Group | Where-Object { !$_.preview })) {
+                    $finding | Add-Member -NotePropertyName preview -NotePropertyValue $previousPreview.preview -Force
+                }
+            }
             $byLocation[$group.Name] = $group.Group
         }
     }
@@ -191,20 +285,20 @@ if ($discoveries.Count) {
     }
     Add-Section '</div>'
     foreach ($collection in $levels) {
-        $groups = Format-Count $collection.Rows.Count
+        $groupCount = $collection.Rows.Count
+        if ($collection.Key -eq 'needs_review') {
+            $reviewRows = @($collection.Rows | Where-Object review)
+            $otherRows = @($collection.Rows | Where-Object { !$_.review })
+            $groupCount = @(Get-ReviewBranches $reviewRows 'purpose').Count + $otherRows.Count
+        }
+        $groups = Format-Count $groupCount
         Add-Section "<details id='junk-$($collection.Key)'$($collection.Open)><summary><span class='review-tag $($collection.Class)'>$($collection.Label)</span> · $groups 组</summary>"
-        if ($collection.Rows.Count) {
-            Add-Section '<div class="table-wrap"><table><thead><tr><th>类别与位置</th><th>大小</th><th>条目</th><th>发现依据</th></tr></thead><tbody>'
-            foreach ($finding in ($collection.Rows | Sort-Object bytes -Descending)) {
-                $label = Escape-Html $finding.label
-                $location = Escape-Html $finding.path
-                $size = Format-Bytes $finding.bytes
-                $items = Format-Count $finding.files
-                $evidence = Escape-Html $finding.evidence
-                $examples = Escape-Html ($finding.examples -join ' · ')
-                Add-Section "<tr><td>$label<br><small class='muted path'>$location</small></td><td class='bytes'>$size</td><td class='bytes'>$items</td><td>$evidence<br><small class='muted path'>$examples</small></td></tr>"
-            }
-            Add-Section '</tbody></table></div>'
+        if ($collection.Key -eq 'needs_review') {
+            if ($reviewRows.Count) { Add-ReviewTree $reviewRows }
+            if ($otherRows.Count) { Add-FindingTable $otherRows }
+        }
+        elseif ($collection.Rows.Count) {
+            Add-FindingTable $collection.Rows
         }
         Add-Section '</details>'
     }
@@ -263,16 +357,23 @@ if ($plan) {
     $saved = Format-Bytes ([double]$estimate)
     $stage = if ($applied) { '执行前的估算。' } else { '本报告为只读预览。实际执行需要确认计划。' }
     Add-Section "<p class='summary'>$count 项，预计 $saved</p><p class='muted'>$stage</p>"
+    if ($plan.include_groups) { Add-Section "<p>选择 $(Escape-Html ($plan.include_groups.label -join '、'))</p>" }
+    if ($plan.exclude_groups) { Add-Section "<p>保留 $(Escape-Html ($plan.exclude_groups.label -join '、'))</p>" }
     if ($plan.groups) {
-        Add-Section '<div class="table-wrap"><table><thead><tr><th>位置</th><th>项目</th><th>数量</th><th>预计占用</th></tr></thead><tbody>'
+        Add-Section '<div class="table-wrap"><table><thead><tr><th>位置</th><th>项目</th><th>数量</th><th>预计占用</th><th>清理影响</th></tr></thead><tbody>'
         foreach ($group in $plan.groups) {
             $name = Escape-Html $group.volume
-            $label = Escape-Html $group.label
+            $label = if ($group.review) { Escape-Html "$($group.review.owner.label) · $($group.review.purpose.label)" }
+                else { Escape-Html $group.label }
+            $impact = if ($group.review) { Escape-Html $group.review.impact } else { Escape-Html $group.note }
             $files = Format-Count $group.files
             $bytes = Format-Bytes $group.allocated_bytes
-            Add-Section "<tr><td>$name</td><td>$label</td><td class='bytes'>$files</td><td class='bytes'>$bytes</td></tr>"
+            Add-Section "<tr><td>$name</td><td>$label</td><td class='bytes'>$files</td><td class='bytes'>$bytes</td><td>$impact</td></tr>"
         }
         Add-Section '</tbody></table></div>'
+    }
+    elseif ($plan.include_groups) {
+        Add-Section '<p>所选范围当前没有能进预览的文件。可展开相应清理项查看处理状态。</p>'
     }
     if ($plan.action -eq 'permanent_delete' -and $plan.files -gt 0) {
         Add-Section '<p><small>此计划使用永久删除。完整条目以本机计划文件为准。</small></p>'

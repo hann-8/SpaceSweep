@@ -6,6 +6,7 @@ compile_error!("SpaceSweep supports Windows.");
 mod checked_file;
 mod cleanup;
 mod discovery;
+mod review;
 mod rules;
 mod scan;
 mod store;
@@ -59,6 +60,12 @@ enum Command {
         /// Saved scan ID. Repeat to combine scans.
         #[arg(long, required = true)]
         scan: Vec<String>,
+        /// Include eligible files under this review group. Repeat to combine groups.
+        #[arg(long)]
+        include_group: Vec<String>,
+        /// Keep eligible files under this review group out of the preview.
+        #[arg(long)]
+        exclude_group: Vec<String>,
         #[arg(long)]
         exclude_rule: Vec<String>,
         #[arg(long)]
@@ -109,6 +116,8 @@ fn main() -> Result<()> {
         }
         Command::Plan {
             scan,
+            include_group,
+            exclude_group,
             exclude_rule,
             exclude_volume,
             exclude_file,
@@ -118,6 +127,8 @@ fn main() -> Result<()> {
                 &store,
                 cleanup::Selections {
                     scans: scan,
+                    include_group,
+                    exclude_group,
                     exclude_rule,
                     exclude_volume,
                     exclude_file,
