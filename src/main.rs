@@ -43,6 +43,9 @@ enum Command {
         /// Number of largest files and directories to return in an analysis.
         #[arg(long, default_value_t = 10)]
         top: usize,
+        /// Stop after this many seconds and report the coverage reached so far.
+        #[arg(long, value_parser = clap::value_parser!(u64).range(1..))]
+        max_seconds: Option<u64>,
         /// Write progress to stderr.
         #[arg(long)]
         progress: bool,
@@ -75,6 +78,7 @@ fn main() -> Result<()> {
             path,
             deep,
             top,
+            max_seconds,
             progress,
         } => {
             let mut report = scan::run(
@@ -83,6 +87,7 @@ fn main() -> Result<()> {
                     path,
                     deep,
                     top,
+                    max_seconds,
                     progress,
                 },
                 &cancellation,

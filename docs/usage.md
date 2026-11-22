@@ -14,10 +14,10 @@
 .\target\release\spacesweep.exe scan --progress
 .\target\release\spacesweep.exe scan --volume D:
 .\target\release\spacesweep.exe scan --path 'D:\待分析目录' --top 10
-.\target\release\spacesweep.exe scan --volume E: --deep
+.\target\release\spacesweep.exe scan --volume E: --deep --max-seconds 20
 ```
 
-快查会列出已挂载本地盘，并检查支持的路径。目录分析按文件属性统计。默认实际删除试点是当前用户目录里的旧临时文件和已验证的 Chrome 网页磁盘缓存。应用识别和跳过以报告中的状态为准。 [已覆盖的规则](application-rules.md)
+快查会列出已挂载本地盘，并检查支持的路径。目录分析按文件属性统计。使用 `--max-seconds` 可限制一轮扫描。到达时限时输出已经走到的范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
 
 有可预览项时，扫描返回 `scan_id`。将它填入预览命令。预览可按规则、盘或准确路径排除，也可重复传入多个 `--scan`。
 

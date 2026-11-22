@@ -1,15 +1,46 @@
+use std::cell::Cell;
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
 use crate::rules::{self, Action, Rule};
 use crate::windows::{self, Location, Stamp, Volume};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StopReason {
+    Cancelled,
+    TimeLimit,
+}
+
+struct Control<'a> {
+    cancel: &'a AtomicBool,
+    deadline: Option<Instant>,
+    reason: Cell<Option<StopReason>>,
+}
+
+impl Control<'_> {
+    fn stopped(&self) -> bool {
+        if self.reason.get().is_some() {
+            return true;
+        }
+        let reason = if self.cancel.load(Ordering::Relaxed) {
+            Some(StopReason::Cancelled)
+        } else if self.deadline.is_some_and(|limit| Instant::now() >= limit) {
+            Some(StopReason::TimeLimit)
+        } else {
+            None
+        };
+        self.reason.set(reason);
+        reason.is_some()
+    }
+}
 
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct Totals {
@@ -63,14 +94,14 @@ fn walk(
     root: &Location,
     recursive: bool,
     top: usize,
-    cancel: &AtomicBool,
+    control: &Control<'_>,
     mut file: impl FnMut(&Location, Stamp),
 ) -> io::Result<Walk> {
     windows::check_directory(root)?;
     let mut output = Walk::default();
     let mut pending = vec![root.clone()];
-    while let Some(directory) = pending.pop() {
-        if cancel.load(Ordering::Relaxed) {
+    'walk: while let Some(directory) = pending.pop() {
+        if control.stopped() {
             break;
         }
         if directory != *root
@@ -91,8 +122,8 @@ fn walk(
         let mut empty = true;
         for entry in entries {
             empty = false;
-            if cancel.load(Ordering::Relaxed) {
-                break;
+            if control.stopped() {
+                break 'walk;
             }
             let entry = match entry {
                 Ok(entry) => entry,
@@ -184,6 +215,8 @@ pub struct DirectoryReport {
     pub totals: Option<Totals>,
     pub largest_directories: Vec<SizeEntry>,
     pub largest_files: Vec<SizeEntry>,
+    pub status: &'static str,
+    pub stop_reason: Option<StopReason>,
     pub error: Option<String>,
 }
 
@@ -196,6 +229,7 @@ pub struct Report {
     pub analysis: Vec<DirectoryReport>,
     pub elapsed_ms: u64,
     pub cancelled: bool,
+    pub stop_reason: Option<StopReason>,
     pub scan_id: Option<String>,
     pub scan_file: Option<PathBuf>,
     pub state_error: Option<String>,
@@ -216,6 +250,7 @@ pub struct Options {
     pub path: Option<PathBuf>,
     pub deep: bool,
     pub top: usize,
+    pub max_seconds: Option<u64>,
     pub progress: bool,
 }
 
@@ -240,6 +275,19 @@ fn rule_row(rule: &Rule) -> RuleReport {
 pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
     let started = Instant::now();
     ensure!(options.top <= 100, "--top must be at most 100");
+    let deadline = options
+        .max_seconds
+        .map(|seconds| {
+            started
+                .checked_add(Duration::from_secs(seconds))
+                .context("scan deadline is too far away")
+        })
+        .transpose()?;
+    let control = Control {
+        cancel,
+        deadline,
+        reason: Cell::new(None),
+    };
     let all = windows::volumes().context("enumerate mounted Windows volumes")?;
     let focus = match options.path {
         Some(path) => {
@@ -279,6 +327,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         analysis: Vec::new(),
         elapsed_ms: 0,
         cancelled: false,
+        stop_reason: None,
         scan_id: None,
         scan_file: None,
         state_error: None,
@@ -292,7 +341,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         // Prevent a Documents location and the same volume-root hint from counting twice.
         let mut seen = HashSet::new();
         for rule in rules::load()? {
-            if cancel.load(Ordering::Relaxed) {
+            if control.stopped() {
                 break;
             }
             let roots = match rule.locations(&all, &requested) {
@@ -308,7 +357,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 }
             };
             for root in roots {
-                if cancel.load(Ordering::Relaxed) {
+                if control.stopped() {
                     break;
                 }
                 if seen.contains(&root) {
@@ -329,26 +378,32 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 let may_plan =
                     verified_root.is_ok() && rule.action.can_delete() && row.blocked_by.is_none();
                 let checked = verified_root.and_then(|()| {
-                    walk(&root, rule.action.recursive(), 0, cancel, |file, stamp| {
-                        if rule.matches(&file.relative, stamp, now) {
-                            row.matching_files += 1;
-                            row.matching_logical_bytes =
-                                row.matching_logical_bytes.saturating_add(stamp.size);
-                            if may_plan {
-                                row.eligible_files += 1;
-                                result.candidates.push(Candidate {
-                                    rule_id: rule.id.clone(),
-                                    location: file.clone(),
-                                    stamp,
-                                });
+                    walk(
+                        &root,
+                        rule.action.recursive(),
+                        0,
+                        &control,
+                        |file, stamp| {
+                            if rule.matches(&file.relative, stamp, now) {
+                                row.matching_files += 1;
+                                row.matching_logical_bytes =
+                                    row.matching_logical_bytes.saturating_add(stamp.size);
+                                if may_plan {
+                                    row.eligible_files += 1;
+                                    result.candidates.push(Candidate {
+                                        rule_id: rule.id.clone(),
+                                        location: file.clone(),
+                                        stamp,
+                                    });
+                                }
                             }
-                        }
-                    })
+                        },
+                    )
                 });
                 match checked {
                     Ok(output) => {
                         seen.insert(root.clone());
-                        row.status = if cancel.load(Ordering::Relaxed)
+                        row.status = if control.reason.get().is_some()
                             || !output.totals.skipped.is_empty()
                         {
                             "partial"
@@ -384,20 +439,21 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
             |focus| vec![focus],
         );
         for root in roots {
-            if cancel.load(Ordering::Relaxed) {
+            if control.stopped() {
                 break;
             }
             let report = analyze(
                 &root,
                 &result.volumes,
                 options.top,
-                cancel,
+                &control,
                 options.progress,
             );
             result.analysis.push(report);
         }
     }
     result.cancelled = cancel.load(Ordering::Relaxed);
+    result.stop_reason = control.reason.get();
     result.elapsed_ms = started.elapsed().as_millis() as u64;
     Ok(result)
 }
@@ -406,7 +462,7 @@ fn analyze(
     root: &Location,
     volumes: &[Volume],
     top: usize,
-    cancel: &AtomicBool,
+    control: &Control<'_>,
     progress: bool,
 ) -> DirectoryReport {
     let display = windows::view(root, volumes);
@@ -419,10 +475,18 @@ fn analyze(
         totals: None,
         largest_directories: Vec::new(),
         largest_files: Vec::new(),
+        status: "unavailable",
+        stop_reason: None,
         error: None,
     };
-    match walk(root, true, top, cancel, |_, _| {}) {
+    match walk(root, true, top, control, |_, _| {}) {
         Ok(output) => {
+            report.stop_reason = control.reason.get();
+            report.status = if report.stop_reason.is_some() || !output.totals.skipped.is_empty() {
+                "partial"
+            } else {
+                "complete"
+            };
             report.totals = Some(output.totals);
             report.largest_files = output
                 .files
@@ -474,6 +538,7 @@ mod tests {
                 path: Some(fixture.path().to_owned()),
                 deep: false,
                 top: 1,
+                max_seconds: None,
                 progress: false,
             },
             &AtomicBool::new(false),
@@ -489,5 +554,22 @@ mod tests {
         assert_eq!(analysis.largest_files[0].path, file);
         assert_eq!(analysis.largest_directories[0].path, folder);
         assert_eq!(fs::metadata(file).unwrap().len(), 8192);
+    }
+
+    #[test]
+    fn an_expired_analysis_reports_partial_coverage() {
+        let fixture = tempfile::tempdir().unwrap();
+        fs::write(fixture.path().join("fixture.bin"), [1, 2]).unwrap();
+        let volumes = windows::volumes().unwrap();
+        let root = windows::locate(fixture.path(), &volumes).unwrap();
+        let control = Control {
+            cancel: &AtomicBool::new(false),
+            deadline: Some(Instant::now()),
+            reason: Cell::new(None),
+        };
+        let report = analyze(&root, &volumes, 3, &control, false);
+        assert_eq!(report.status, "partial");
+        assert_eq!(report.stop_reason, Some(StopReason::TimeLimit));
+        assert_eq!(report.totals.unwrap().files, 0);
     }
 }
