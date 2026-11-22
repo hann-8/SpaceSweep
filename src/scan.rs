@@ -97,12 +97,13 @@ fn walk(
     recursive: bool,
     top: usize,
     control: &Control<'_>,
-    mut file: impl FnMut(&Location, Stamp),
+    known_caches: Option<&[Location]>,
+    mut file: impl FnMut(&Location, Stamp, Option<&(Kind, PathBuf)>),
 ) -> io::Result<Walk> {
     windows::check_directory(root)?;
     let mut output = Walk::default();
-    let mut pending = vec![root.clone()];
-    'walk: while let Some(directory) = pending.pop() {
+    let mut pending = vec![(root.clone(), None)];
+    'walk: while let Some((directory, cache)) = pending.pop() {
         if control.stopped() {
             break;
         }
@@ -114,6 +115,19 @@ fn walk(
                 continue;
             }
         };
+        let cache = cache.or_else(|| {
+            let known_caches = known_caches?;
+            let kind = discovery::cache_layout(&directory)?;
+            if directory.relative.starts_with("$Recycle.Bin")
+                || known_caches.iter().any(|known| {
+                    known.volume == directory.volume
+                        && windows::relative_to(&directory.relative, &known.relative).is_some()
+                })
+            {
+                return None;
+            }
+            Some((kind, directory.relative.clone()))
+        });
         output.totals.directories += 1;
         let mut empty = true;
         for entry in entries {
@@ -148,7 +162,7 @@ fn walk(
             let location = directory.child(name);
             if meta.is_dir() {
                 if recursive {
-                    pending.push(location);
+                    pending.push((location, cache.clone()));
                 }
                 continue;
             }
@@ -158,7 +172,7 @@ fn walk(
             }
             output.totals.files += 1;
             output.totals.logical_bytes = output.totals.logical_bytes.saturating_add(stamp.size);
-            file(&location, stamp);
+            file(&location, stamp, cache.as_ref());
             if top != 0 {
                 let relative = location.relative.strip_prefix(&root.relative).unwrap();
                 if relative.components().count() > 1
@@ -387,7 +401,8 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                         rule.action.recursive(),
                         0,
                         &control,
-                        |file, stamp| {
+                        None,
+                        |file, stamp, _| {
                             if rule.matches(&file.relative, stamp, now) {
                                 row.matching_files += 1;
                                 row.matching_logical_bytes =
@@ -622,7 +637,7 @@ fn discover_known(
         }
         let mut groups = Groups::default();
         let recursive = !matches!(kind, Some(Kind::Thumbnails | Kind::BrowserComponentCache));
-        let checked = walk(&root, recursive, 0, control, |file, stamp| {
+        let checked = walk(&root, recursive, 0, control, None, |file, stamp, _| {
             let (kind, group) = match kind {
                 Some(Kind::CrashDumps)
                     if !discovery::extension(&file.relative).eq_ignore_ascii_case("dmp") =>
@@ -731,18 +746,43 @@ fn analyze(
         error: None,
     };
     let mut groups = Groups::default();
-    match walk(root, true, top, control, |file, stamp| {
-        if let Some((_, covered, now)) = &discovery
-            && let Some(kind) = discovery::clue(file, stamp, *now, false)
-            && !file.relative.starts_with("$Recycle.Bin")
-            && !covered
-                .iter()
-                .any(|area| area.volume == file.volume && file.relative.starts_with(&area.relative))
-            && let Some(parent) = file.relative.parent()
-        {
-            groups.add(kind, parent, file, stamp, kind.review_level());
-        }
-    }) {
+    let known_caches = discovery.as_ref().map(|(report, _, _)| {
+        report
+            .findings
+            .iter()
+            .filter(|finding| {
+                matches!(
+                    finding.kind,
+                    Kind::BrowserCache
+                        | Kind::BrowserCodeCache
+                        | Kind::FirefoxCache
+                        | Kind::NpmCache
+                )
+            })
+            .filter_map(|finding| windows::locate(&finding.path, volumes))
+            .collect::<Vec<_>>()
+    });
+    match walk(
+        root,
+        true,
+        top,
+        control,
+        known_caches.as_deref(),
+        |file, stamp, cache| {
+            if let Some((kind, path)) = cache {
+                groups.add(*kind, path, file, stamp, kind.review_level());
+            } else if let Some((_, covered, now)) = &discovery
+                && let Some(kind) = discovery::clue(file, stamp, *now, false)
+                && !file.relative.starts_with("$Recycle.Bin")
+                && !covered.iter().any(|area| {
+                    area.volume == file.volume && file.relative.starts_with(&area.relative)
+                })
+                && let Some(parent) = file.relative.parent()
+            {
+                groups.add(kind, parent, file, stamp, kind.review_level());
+            }
+        },
+    ) {
         Ok(output) => {
             report.stop_reason = control.reason.get();
             report.status = if report.stop_reason.is_some() || !output.totals.skipped.is_empty() {
@@ -821,6 +861,64 @@ mod tests {
         assert_eq!(analysis.largest_files[0].path, file);
         assert_eq!(analysis.largest_directories[0].path, folder);
         assert_eq!(fs::metadata(file).unwrap().len(), 8192);
+    }
+
+    #[test]
+    fn discovery_matches_cache_layouts_in_custom_application_directories() {
+        let fixture = tempfile::tempdir().unwrap();
+        for (name, bytes) in [
+            ("portable/Cache/Cache_Data/index", 1),
+            ("portable/Cache/Cache_Data/data_0", 9),
+            ("portable/Cache/Cache_Data/f_000001", 2),
+            ("portable/Code Cache/js/index", 3),
+            ("portable/Code Cache/js/index-dir/the-real-index", 4),
+            ("portable/Code Cache/wasm/index", 5),
+            ("portable/Code Cache/wasm/index-dir/the-real-index", 6),
+            ("browser-profile/cache2/index", 7),
+            (
+                "browser-profile/cache2/entries/0000000000000000000000000000000000000000",
+                11,
+            ),
+            ("custom-cache/_cacache/content-v2/package", 13),
+            ("custom-cache/_cacache/index-v5/entry", 17),
+            ("source-tree/Cache/Cache_Data/index", 23),
+        ] {
+            let file = fixture.path().join(name);
+            fs::create_dir_all(file.parent().unwrap()).unwrap();
+            fs::write(file, vec![0; bytes]).unwrap();
+        }
+
+        let report = run(
+            Options {
+                volumes: Vec::new(),
+                path: Some(fixture.path().to_owned()),
+                deep: false,
+                discover: true,
+                top: 0,
+                max_seconds: None,
+                progress: false,
+            },
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        let findings = report.discovery.unwrap().findings;
+        assert!(
+            findings
+                .iter()
+                .all(|row| row.review_level == ReviewLevel::NeedsReview)
+        );
+        assert_eq!(
+            findings
+                .iter()
+                .map(|row| (row.kind, row.bytes))
+                .collect::<Vec<_>>(),
+            [
+                (Kind::BrowserCache, 12),
+                (Kind::BrowserCodeCache, 18),
+                (Kind::FirefoxCache, 18),
+                (Kind::NpmCache, 30),
+            ]
+        );
     }
 
     #[test]

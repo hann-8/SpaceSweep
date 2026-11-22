@@ -11,6 +11,16 @@
 | 「帮 C 盘再腾出 20 GB」 | 用户提出容量目标时按该卷计算。区分希望增加的量和最终可用空间门槛。按预估收益与影响挑选方案，执行后检查目标与实测的差距。 |
 | 「昨天清完，今天怎么又少了」 | 有两份范围和统计口径可比的本地扫描时，找出增长最多的应用与目录。第一次扫描建立基线。核实反复重建后，再给出应用支持的长期管理方式。比如 After Effects 可设置磁盘缓存容量上限。 [Adobe 磁盘缓存设置](https://helpx.adobe.com/after-effects/desktop/get-started/preferences-and-settings/preferences.html) |
 
+### 按真实场景交付
+
+| 场景 | 阶段目标 |
+| --- | --- |
+| 日常整轮清理 | 一轮扫描发现各盘的回收站、临时文件、系统垃圾和常见应用缓存。尽早给出主要发现，按应用和类别展开预览。CCleaner 提供整轮 Health Check 和可展开的 Custom Clean。 [CCleaner](https://support.ccleaner.com/s/article/how-do-i-use-custom-clean?language=en_US) |
+| 系统盘空间告急 | 给出目标盘上实际可处理的项目、预计收益和处理后的可用空间。对旧 Windows 安装等系统管理项，报告对应的 Windows 清理入口。 [Windows 清理建议](https://support.microsoft.com/en-us/windows/experience/storage-filemanagement/free-up-drive-space-in-windows) |
+| 大型应用与数据盘 | 定位浏览器多配置、迁移后的应用数据、剪辑媒体缓存、游戏下载缓存和开发工具缓存。按真实位置和用途说明重建、重下或登录影响。 [Premiere](https://helpx.adobe.com/premiere/desktop/troubleshooting/media-issues/clear-media-cache-using-preferences.html) · [Steam](https://help.steampowered.com/en/faqs/view/6AD7-820D-8BE5-E51F) · [Docker](https://docs.docker.com/reference/cli/docker/system/prune/) |
+
+使用成熟清理软件的日常流程和规则库确定覆盖类别。共享的缓存布局用同一识别方式覆盖多个应用和数据盘。用整轮新增发现的条目、体积、可处理范围和用时验收。 [BleachBit CleanerML](https://docs.bleachbit.org/cml/cleanerml/) · [Winapp2](https://github.com/MoscaDotTo/Winapp2)
+
 ## 职责与调用
 
 本地执行器首选 Rust CLI。由标准库做常规文件枚举，用 Microsoft 的 Windows API 绑定获取卷信息和文件句柄。C# 和 .NET 10 LTS 保留为备选。 [Rust 目录项元数据](https://doc.rust-lang.org/std/fs/struct.DirEntry.html#method.metadata) · [Microsoft Windows Rust 绑定](https://github.com/microsoft/windows-rs)

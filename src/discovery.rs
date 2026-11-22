@@ -18,6 +18,7 @@ pub enum Kind {
     BrowserCache,
     BrowserCodeCache,
     BrowserComponentCache,
+    FirefoxCache,
     NpmCache,
     PipCache,
     OldTemp,
@@ -63,19 +64,23 @@ impl Kind {
             ),
             Self::BrowserCache => (
                 "网页磁盘缓存",
-                "浏览器用户配置中的 Cache/Cache_Data，网页资源可按需重新下载。",
+                "Chromium 浏览器和桌面应用使用的 Cache/Cache_Data，资源可按需重新下载。",
             ),
             Self::BrowserCodeCache => (
                 "网页代码缓存",
-                "浏览器为网页脚本生成的代码缓存。清理后再次访问网页时可能需要重新编译。",
+                "Chromium 浏览器和桌面应用为脚本生成的缓存。清理后可能需要重新编译。",
             ),
             Self::BrowserComponentCache => (
                 "浏览器组件更新缓存",
                 "用户数据根目录下缓存的组件更新包及索引。清理后，组件更新时可能需要重新下载。",
             ),
+            Self::FirefoxCache => (
+                "Firefox 网页磁盘缓存",
+                "Firefox 配置目录下的 cache2 网页资源缓存，资源可按需重新下载。",
+            ),
             Self::NpmCache => (
                 "npm 软件包下载缓存",
-                "npm 默认位置的 _cacache，存放可重新获取的请求和软件包数据。",
+                "npm 等工具使用的 _cacache，存放可重新获取的请求和软件包数据。",
             ),
             Self::PipCache => (
                 "pip 下载和构建缓存",
@@ -221,6 +226,52 @@ pub fn extension(file: &Path) -> &str {
     file.extension()
         .and_then(|name| name.to_str())
         .unwrap_or_default()
+}
+
+fn layout_marker(root: &Path, name: &str, directory: bool) -> bool {
+    fs::symlink_metadata(root.join(name)).is_ok_and(|meta| {
+        let expected_type = if directory {
+            meta.is_dir()
+        } else {
+            meta.is_file()
+        };
+        expected_type && Stamp::from(&meta).attributes & windows::SKIP_ATTRIBUTES == 0
+    })
+}
+
+fn chromium_index(root: &Path) -> bool {
+    layout_marker(root, "index", false)
+        && (layout_marker(root, "data_0", false) || layout_marker(root, "index-dir", true))
+}
+
+/// Inspect the markers of a cache directory once, regardless of its application or volume.
+pub fn cache_layout(directory: &Location) -> Option<Kind> {
+    let relative = &directory.relative;
+    match relative.file_name()?.to_str()? {
+        "Cache_Data" if relative.parent()?.file_name()? == "Cache" => {
+            chromium_index(&directory.native()).then_some(Kind::BrowserCache)
+        }
+        "Code Cache" => {
+            let root = directory.native();
+            ["js", "wasm"]
+                .into_iter()
+                .any(|part| layout_marker(&root, part, true) && chromium_index(&root.join(part)))
+                .then_some(Kind::BrowserCodeCache)
+        }
+        "cache2" => {
+            let root = directory.native();
+            (layout_marker(&root, "entries", true)
+                && (layout_marker(&root, "index", false)
+                    || layout_marker(&root, "index.log", false)))
+            .then_some(Kind::FirefoxCache)
+        }
+        "_cacache" => {
+            let root = directory.native();
+            (layout_marker(&root, "content-v2", true) && layout_marker(&root, "index-v5", true))
+                .then_some(Kind::NpmCache)
+        }
+        _ => None,
+    }
 }
 
 /// Classify file metadata, with deeper checks limited to a small set of matching names.

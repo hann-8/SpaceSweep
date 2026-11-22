@@ -19,7 +19,7 @@
 .\target\release\spacesweep.exe scan --volume E: --deep --max-seconds 20
 ```
 
-`--discover` 查各盘回收站、常用缓存和临时产物，输出 `discovery.findings`。每组包含盘、路径、类别、条目数、大小、依据和 `review_level`。加 `--deep` 会在逐盘枚举时识别更多散落的转储和临时产物。 `discovery.quick_elapsed_ms` 记录完成已知来源用时，`elapsed_ms` 记录本次总耗时。
+`--discover` 查各盘回收站、常用缓存和临时产物，输出 `discovery.findings`。每组包含盘、路径、类别、条目数、大小、依据和 `review_level`。加 `--deep` 会在逐盘枚举时识别更多散落的转储和临时产物，以及使用 Chromium、Firefox、npm 通用布局的缓存。指定目录分析也会识别其范围内的这些缓存。 `discovery.quick_elapsed_ms` 记录完成已知来源用时，`elapsed_ms` 记录本次总耗时。
 
 快查会列出已挂载本地盘，并检查支持的路径。目录分析按文件属性统计。使用 `--max-seconds` 可限制一轮扫描。到达时限时输出已经走到的范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
 
