@@ -25,7 +25,25 @@ pub enum Kind {
     DumpClue,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReviewLevel {
+    Confirmed,
+    NeedsReview,
+    Suspected,
+}
+
 impl Kind {
+    pub fn review_level(self) -> ReviewLevel {
+        match self {
+            Self::TempInstaller
+            | Self::DownloadInstaller
+            | Self::ArchiveWithDirectory
+            | Self::DumpClue => ReviewLevel::Suspected,
+            _ => ReviewLevel::NeedsReview,
+        }
+    }
+
     fn description(self) -> (&'static str, &'static str) {
         match self {
             Self::RecycleBin => ("回收站", "Windows 返回该盘回收站的条目数和大小。"),
@@ -81,6 +99,7 @@ impl Kind {
 pub struct Finding {
     pub kind: Kind,
     pub identified: bool,
+    pub review_level: ReviewLevel,
     pub label: String,
     pub evidence: &'static str,
     pub volume_id: String,
@@ -93,19 +112,11 @@ pub struct Finding {
 impl Finding {
     pub fn new(kind: Kind, volume_id: String, path: PathBuf, files: u64, bytes: u64) -> Self {
         let (label, evidence) = kind.description();
+        let review_level = kind.review_level();
         Self {
             kind,
-            identified: matches!(
-                kind,
-                Kind::RecycleBin
-                    | Kind::CrashDumps
-                    | Kind::Minidump
-                    | Kind::Thumbnails
-                    | Kind::BrowserCache
-                    | Kind::NpmCache
-                    | Kind::PipCache
-                    | Kind::OldTemp
-            ),
+            identified: review_level != ReviewLevel::Suspected,
+            review_level,
             label: label.into(),
             evidence,
             volume_id,
@@ -135,8 +146,9 @@ pub struct Report {
 impl Report {
     pub fn sort(&mut self) {
         self.findings.sort_unstable_by(|a, b| {
-            a.kind
-                .cmp(&b.kind)
+            a.review_level
+                .cmp(&b.review_level)
+                .then_with(|| a.kind.cmp(&b.kind))
                 .then_with(|| b.bytes.cmp(&a.bytes))
                 .then_with(|| a.path.cmp(&b.path))
         });
@@ -144,14 +156,29 @@ impl Report {
 }
 
 #[derive(Default)]
-pub struct Groups(BTreeMap<(Kind, PathBuf), Finding>);
+pub struct Groups(BTreeMap<(Kind, PathBuf, ReviewLevel), Finding>);
 
 impl Groups {
-    pub fn add(&mut self, kind: Kind, group: &Path, file: &Location, stamp: Stamp) {
+    pub fn add(
+        &mut self,
+        kind: Kind,
+        group: &Path,
+        file: &Location,
+        stamp: Stamp,
+        level: ReviewLevel,
+    ) {
         let finding = self
             .0
-            .entry((kind, group.to_owned()))
-            .or_insert_with(|| Finding::new(kind, file.volume.clone(), group.to_owned(), 0, 0));
+            .entry((kind, group.to_owned(), level))
+            .or_insert_with(|| {
+                let mut finding = Finding::new(kind, file.volume.clone(), group.to_owned(), 0, 0);
+                if level == ReviewLevel::Confirmed {
+                    finding.review_level = level;
+                    finding.label = "已核验的旧用户临时文件".into();
+                    finding.evidence = "匹配已验证的旧临时文件规则，当前文件状态通过复核。";
+                }
+                finding
+            });
         finding.files += 1;
         finding.bytes = finding.bytes.saturating_add(stamp.size);
         if finding.examples.len() < 3

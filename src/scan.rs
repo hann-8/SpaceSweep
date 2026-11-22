@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::PathBuf;
@@ -9,7 +9,8 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
-use crate::discovery::{self, Finding, Groups, Kind};
+use crate::checked_file::CheckedFile;
+use crate::discovery::{self, Finding, Groups, Kind, ReviewLevel};
 use crate::rules::{self, Action, Rule};
 use crate::windows::{self, Folder, Location, Stamp, Volume};
 
@@ -430,7 +431,20 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
             for row in &result.rules {
                 add_rule_finding(discovery, row);
             }
-            covered = discover_known(discovery, &result.volumes, &control, now, options.progress);
+            let temp_candidates = result
+                .candidates
+                .iter()
+                .filter(|item| item.rule_id == "windows.old_temp")
+                .map(|item| (&item.location, item.stamp))
+                .collect();
+            covered = discover_known(
+                discovery,
+                &result.volumes,
+                &control,
+                now,
+                options.progress,
+                &temp_candidates,
+            );
             discovery.quick_elapsed_ms = Some(started.elapsed().as_millis() as u64);
         }
     }
@@ -541,6 +555,7 @@ fn discover_known(
     control: &Control,
     now: u64,
     progress: bool,
+    temp_candidates: &HashMap<&Location, Stamp>,
 ) -> Vec<Location> {
     let local = match Folder::LocalAppData.known() {
         Ok(local) => local,
@@ -609,7 +624,15 @@ fn discover_known(
                     (kind, file.relative.parent().unwrap_or(&root.relative))
                 }
             };
-            groups.add(kind, group, file, stamp);
+            let level = if kind == Kind::OldTemp
+                && temp_candidates.get(file) == Some(&stamp)
+                && CheckedFile::open(file, false).is_ok_and(|item| item.stamp == stamp)
+            {
+                ReviewLevel::Confirmed
+            } else {
+                kind.review_level()
+            };
+            groups.add(kind, group, file, stamp, level);
         });
         let (status, detail) = match checked {
             Ok(output) => {
@@ -673,7 +696,7 @@ fn analyze(
                 .any(|area| area.volume == file.volume && file.relative.starts_with(&area.relative))
             && let Some(parent) = file.relative.parent()
         {
-            groups.add(kind, parent, file, stamp);
+            groups.add(kind, parent, file, stamp, kind.review_level());
         }
     }) {
         Ok(output) => {

@@ -11,7 +11,7 @@ description: Find and clean junk across local Windows drives, including stale te
 
 1. 明确用户的范围和保留条件。「检查」和一般空间诊断走只读扫描。日常清理默认覆盖已挂载的所有本地数据卷，目标是尽量处理有证据的候选。用户主动给了容量目标时，按对应的盘核算。
 2. 先执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--discover','--progress')`。先报 `discovery.findings` 里的实际垃圾类别、体积和来源。用户要求全盘仔细找或尽量找齐时，加 `--deep`，或用同一会话的 `Analyze -Arguments @('--path',$path,'--discover','--max-seconds','20')` 对相应盘补查。`--volume D:` 可限定单盘。
-3. 优先追查可能漏掉的垃圾，例如迁移过的应用缓存、已完成更新的安装包、临时任务中间产物。看生成程序、应用设置和实际文件构成。带 `identified: false` 的是待核实线索。QQ、微信文件和未知用途的大目录需先查具体数据类型。
+3. 按 `review_level` 汇报各级的体积和主要项目。红色 `confirmed` 是已核验、清理对正常使用无已知影响的旧临时文件。黄色 `needs_review` 需确认重建开销、恢复或诊断需求。绿色 `suspected` 是用途或来源待核实的疑似垃圾。继续查有明显收益的线索，例如迁移的缓存和已结束的安装残留。
 
 用 `discovery.checks`、`status` 和 `stop_reason` 交代实际查到的范围。汇报清理预览前，先告诉用户这次找到了什么。
 

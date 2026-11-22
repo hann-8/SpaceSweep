@@ -19,7 +19,7 @@
 .\target\release\spacesweep.exe scan --volume E: --deep --max-seconds 20
 ```
 
-`--discover` 查各盘回收站、常用缓存和临时产物，输出 `discovery.findings`。每组包含盘、路径、类别、条目数、大小和依据。`identified: true` 表示已认出用途，安装包和压缩包等线索有单独明细。加 `--deep` 会在逐盘枚举时识别更多散落的转储和临时产物。 `discovery.quick_elapsed_ms` 记录完成已知来源用时，`elapsed_ms` 记录本次总耗时。
+`--discover` 查各盘回收站、常用缓存和临时产物，输出 `discovery.findings`。每组包含盘、路径、类别、条目数、大小、依据和 `review_level`。加 `--deep` 会在逐盘枚举时识别更多散落的转储和临时产物。 `discovery.quick_elapsed_ms` 记录完成已知来源用时，`elapsed_ms` 记录本次总耗时。
 
 快查会列出已挂载本地盘，并检查支持的路径。目录分析按文件属性统计。使用 `--max-seconds` 可限制一轮扫描。到达时限时输出已经走到的范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
 
@@ -39,13 +39,16 @@
 
 ## 阅读结果
 
+- **红色 · 确认可删** (`confirmed`) 表示符合已验证的旧临时文件规则，文件当前状态通过复核，清理对正常使用无已知影响。
+- **黄色 · 需要审核** (`needs_review`) 表示文件用途已识别，清理前要确认缓存重建代价、回收站恢复需求、诊断需求或当前状态。
+- **绿色 · 疑似垃圾** (`suspected`) 表示有残留线索，需进一步确定来源或用途。
 - 扫描的 `matching_logical_bytes` 是匹配规则的文件长度。通过当前执行前置条件的数量为 `eligible_files`。Chrome 正在运行时仍可看到占用和阻塞原因。
 - 预览的 `allocated_bytes` 用于估算影响。系统条目、个人资料和待应用内处理项有各自的边界。
 - 执行后优先看 `deleted_files`、`outcomes`、各盘的 `available_change_bytes` 和本机 `receipt_file`。卷净变化包括同期的系统活动。 [卷容量接口](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdiskfreespaceexw)
 
 ## 本地可视化报告
 
-项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告显示每个盘的覆盖情况，预览和执行阶段分别加上本轮计划和复测数据。
+项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告首屏显示红、黄、绿各级的条目数和大小，点对应卡片可以定位明细。预览和执行阶段分别加上本轮计划和复测数据。
 
 ```powershell
 $scan = .\scripts\spacesweep.ps1 Scan -Arguments @('--discover') | ConvertFrom-Json

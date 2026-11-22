@@ -37,6 +37,12 @@ function Format-Count($Value) {
     '{0:N0}' -f [long]$Value
 }
 
+function Get-ReviewLevel($Finding) {
+    if ($Finding.review_level) { return $Finding.review_level }
+    if ($Finding.identified) { return 'needs_review' }
+    'suspected'
+}
+
 function Get-Percent($Part, $Whole) {
     if ($Whole -le 0) { return 0 }
     $fraction = [Math]::Max(0.0, [Math]::Min(1.0, [double]$Part / [double]$Whole))
@@ -119,6 +125,12 @@ section { margin-top:24px; }
 .card,.panel,details { background:var(--paper); border:1px solid var(--line); border-radius:12px; }
 .card,.panel { padding:14px 17px; }
 .card .value { font-size:25px; font-weight:650; display:block; margin:3px 0 8px; }
+.review-confirmed { --review-ink:#9a252e; --review-bg:#fff1f1; --review-line:#d95560; }
+.review-needed { --review-ink:#704b05; --review-bg:#fff7dd; --review-line:#d4a134; }
+.review-suspected { --review-ink:#216344; --review-bg:#edf8ef; --review-line:#58a477; }
+.review-card { display:block; border-top:3px solid var(--review-line); background:var(--review-bg); color:var(--review-ink); text-decoration:none; }
+.review-card:hover { text-decoration:underline; }
+.review-tag { display:inline-block; color:var(--review-ink); background:var(--review-bg); padding:2px 8px; border-radius:5px; }
 .coverage { margin-top:8px; border-top:1px solid var(--line); padding-top:7px; color:var(--muted); }
 .numbers,.bytes { font-variant-numeric:tabular-nums; }
 .meter { height:9px; border-radius:9px; background:var(--teal-light); overflow:hidden; }
@@ -155,16 +167,32 @@ if ($discoveries.Count) { Add-Section '<a href="#junk">垃圾发现</a>' }
 Add-Section '<a href="#volumes">磁盘容量</a><a href="#preview">清理预览</a><a href="#directories">目录排行</a><a href="#known">已知位置</a></nav></header>'
 
 if ($discoveries.Count) {
-    $findings = @($discoveries.findings | Group-Object -Property kind,path | ForEach-Object { $_.Group[-1] })
-    $identified = @($findings | Where-Object identified)
-    $clues = @($findings | Where-Object { !$_.identified })
-    $total = Format-Bytes (($identified | Measure-Object bytes -Sum).Sum)
-    $count = Format-Count (($identified | Measure-Object files -Sum).Sum)
+    $byLocation = @{}
+    foreach ($discovery in $discoveries) {
+        foreach ($group in ($discovery.findings | Group-Object -Property kind,path)) {
+            $previous = $byLocation[$group.Name]
+            if (($previous.review_level -contains 'confirmed') -and ($group.Group.review_level -notcontains 'confirmed')) { continue }
+            $byLocation[$group.Name] = $group.Group
+        }
+    }
+    $findings = @($byLocation.Values | ForEach-Object { $_ })
+    $levels = @(
+        @{ Key = 'confirmed'; Class = 'review-confirmed'; Label = '确认可删'; Description = '已核验的旧临时文件'; Open = ' open' },
+        @{ Key = 'needs_review'; Class = 'review-needed'; Label = '需要审核'; Description = '确认重建、恢复或诊断需求'; Open = ' open' },
+        @{ Key = 'suspected'; Class = 'review-suspected'; Label = '疑似垃圾'; Description = '继续核实用途或来源'; Open = '' }
+    )
     $elapsed = Format-Count ($analyses[-1].elapsed_ms)
-    Add-Section "<section id='junk'><h2>垃圾发现</h2><p class='summary'>$count 项 · $total</p><p class='muted'>已识别项目的文件大小与回收站用量 · 最近一次扫描 $elapsed ms</p>"
-    foreach ($collection in @(@{ Label = '已识别的垃圾'; Rows = $identified; Open = ' open' }, @{ Label = '待核实的残留线索'; Rows = $clues; Open = '' })) {
+    Add-Section "<section id='junk'><h2>垃圾发现</h2><p class='muted'>文件大小与回收站用量 · 最近一次扫描 $elapsed ms</p><div class='grid'>"
+    foreach ($level in $levels) {
+        $level.Rows = @($findings | Where-Object { (Get-ReviewLevel $_) -eq $level.Key })
+        $total = Format-Bytes ([double](($level.Rows | Measure-Object bytes -Sum).Sum))
+        $count = Format-Count (($level.Rows | Measure-Object files -Sum).Sum)
+        Add-Section "<a class='card review-card $($level.Class)' href='#junk-$($level.Key)'><h3>$($level.Label)</h3><strong class='value numbers'>$total</strong><div>$count 项 · $($level.Description)</div></a>"
+    }
+    Add-Section '</div>'
+    foreach ($collection in $levels) {
         $groups = Format-Count $collection.Rows.Count
-        Add-Section "<details$($collection.Open)><summary>$($collection.Label) · $groups 组</summary>"
+        Add-Section "<details id='junk-$($collection.Key)'$($collection.Open)><summary><span class='review-tag $($collection.Class)'>$($collection.Label)</span> · $groups 组</summary>"
         if ($collection.Rows.Count) {
             Add-Section '<div class="table-wrap"><table><thead><tr><th>类别与位置</th><th>大小</th><th>条目</th><th>发现依据</th></tr></thead><tbody>'
             foreach ($finding in ($collection.Rows | Sort-Object bytes -Descending)) {
