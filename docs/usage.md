@@ -41,7 +41,18 @@
 
 ## 本地可视化报告
 
-把命令的 JSON 标准输出保存为本地文件。下面的示例使用已存在的报告目录。多份目录分析通过 `-AnalysisJson` 数组传入。计划和执行输入分别使用 `plan` 和 `apply` 的标准输出 JSON。
+项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告显示每个盘的覆盖情况，预览和执行阶段分别加上本轮计划和复测数据。
+
+```powershell
+$scan = .\scripts\spacesweep.ps1 Scan | ConvertFrom-Json
+$analysis = .\scripts\spacesweep.ps1 Analyze -SessionDir $scan.session_dir `
+    -Arguments @('--path','D:\','--max-seconds','20') | ConvertFrom-Json
+$analysis.report_file
+```
+
+生成预览时用 `Plan -SessionDir $scan.session_dir -Arguments @('--scan',$scan.scan_id)`。确认后用同一会话的 `Apply` 传具体计划 ID。结果 JSON 会保留原生命令的字段、源数据文件和报告链接。
+
+也可以用已有的原生命令 JSON 导出报告。多份目录分析通过 `-AnalysisJson` 数组传入。计划和执行输入分别使用 `plan` 和 `apply` 的标准输出 JSON。
 
 ```powershell
 .\target\release\spacesweep.exe scan | Set-Content .spacesweep-state\scan.json -Encoding UTF8

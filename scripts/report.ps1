@@ -71,6 +71,26 @@ $analyses = @(
     $scan
     foreach ($inputPath in $AnalysisJson) { Read-ReportData $inputPath }
 )
+$areas = @($analyses | ForEach-Object { $_.analysis } | Where-Object { $_ })
+
+function Get-CoverageLabel($Volume) {
+    $roots = @($Volume.mounts | ForEach-Object { $_.TrimEnd([char[]]@('\', '/')) })
+    $areasOnVolume = @($areas | Where-Object volume_id -eq $Volume.id)
+    $whole = $areasOnVolume | Where-Object {
+        $_.root -and ($roots -contains $_.root.TrimEnd([char[]]@('\', '/')))
+    } | Select-Object -Last 1
+    if ($whole) {
+        if ($whole.error) { return '整卷分析无法读取' }
+        if ($whole.stop_reason) {
+            return '整卷分析部分覆盖 · ' + (Get-ReasonLabel $whole.stop_reason)
+        }
+        if ($whole.status -eq 'partial') { return '已遍历可访问目录 · 有跳过项' }
+        return '整卷目录已遍历'
+    }
+    if ($areasOnVolume.Count) { return '已分析选定目录' }
+    if ($scan.mode -eq 'directory_analysis' -and $scan.stop_reason) { return '目录分析未开始' }
+    '快查 · 已知位置'
+}
 
 Add-Section @'
 <!doctype html>
@@ -98,6 +118,7 @@ section { margin-top:24px; }
 .card,.panel,details { background:var(--paper); border:1px solid var(--line); border-radius:12px; }
 .card,.panel { padding:14px 17px; }
 .card .value { font-size:25px; font-weight:650; display:block; margin:3px 0 8px; }
+.coverage { margin-top:8px; border-top:1px solid var(--line); padding-top:7px; color:var(--muted); }
 .numbers,.bytes { font-variant-numeric:tabular-nums; }
 .meter { height:9px; border-radius:9px; background:var(--teal-light); overflow:hidden; }
 .meter span { display:block; height:100%; border-radius:9px; background:var(--teal); }
@@ -146,12 +167,14 @@ foreach ($volume in $scan.volumes) {
     $free = Format-Bytes $volume.space.available_bytes
     $total = Format-Bytes $volume.space.total_bytes
     $occupied = Format-Bytes $used
+    $coverage = Escape-Html (Get-CoverageLabel $volume)
     Add-Section @"
 <article class="card">
 <h3>$name <small class="muted">$filesystem</small></h3>
 <span class="value numbers">可用 $free</span>
 <div class="meter" role="img" aria-label="已用 $usedPercent%"><span style="width:$usedPercent%"></span></div>
 <p class="muted numbers">已用 $occupied · 总容量 $total</p>
+<div class="coverage"><small>$coverage</small></div>
 </article>
 "@
 }
@@ -178,6 +201,9 @@ if ($plan) {
     if ($plan.action -eq 'permanent_delete' -and $plan.files -gt 0) {
         Add-Section '<p><small>此计划使用永久删除。完整条目以本机计划文件为准。</small></p>'
     }
+}
+elseif ($applied) {
+    Add-Section '<p>本次处理见下方清理结果。</p>'
 }
 else {
     Add-Section '<p>本报告仅包含扫描数据。已知位置会标出符合预览条件的数量。</p>'
@@ -206,53 +232,49 @@ if ($applied) {
 }
 
 Add-Section '<section id="directories"><h2>目录占用排行</h2><p class="muted">按已读取文件的逻辑大小汇总。目录大小反映占用，清理资格以预览为准。</p>'
-$hasDirectoryData = $false
-foreach ($source in $analyses) {
-    foreach ($item in $source.analysis) {
-        $hasDirectoryData = $true
-        $root = Escape-Html $item.root
-        $status = if ($item.error) { '无法读取' } elseif ($item.status -eq 'partial') { '部分覆盖' } else { '已分析' }
-        $partial = if ($item.stop_reason) { ' · ' + (Escape-Html (Get-ReasonLabel $item.stop_reason)) }
-        $badge = if ($status -eq '已分析') { 'status status-complete' } else { 'status' }
-        Add-Section "<details open><summary><span class='path'>$root</span> <span class='$badge'>$status$partial</span></summary>"
-        if ($item.error) {
-            $reason = Escape-Html $item.error
-            Add-Section "<p>$reason</p></details>"
-            continue
-        }
-        $bytes = Format-Bytes $item.totals.logical_bytes
-        $files = Format-Count $item.totals.files
-        $dirs = Format-Count $item.totals.directories
-        Add-Section "<p class='muted'>已读 $files 个文件、$dirs 个目录，文件大小合计 $bytes。</p>"
-        $max = ($item.largest_directories | Measure-Object -Property logical_bytes -Maximum).Maximum
-        foreach ($dir in $item.largest_directories) {
-            $path = Escape-Html $dir.path
-            $size = Format-Bytes $dir.logical_bytes
-            $width = Get-Percent $dir.logical_bytes $max
-            Add-Section "<div class='rank'><div class='rank-label'><span class='path'>$path</span><b class='bytes'>$size</b></div><div class='meter' aria-hidden='true'><span style='width:$width%'></span></div></div>"
-        }
-        if ($item.totals.skipped) {
-            $reasons = foreach ($entry in $item.totals.skipped.PSObject.Properties) {
-                '{0} {1}' -f (Get-ReasonLabel $entry.Name), (Format-Count $entry.Value)
-            }
-            if ($reasons) {
-                $reason = Escape-Html ($reasons -join ' · ')
-                Add-Section "<p><small>跳过 $reason</small></p>"
-            }
-        }
-        if ($item.largest_files) {
-            Add-Section '<details><summary>查看最大文件</summary><ul class="files">'
-            foreach ($file in $item.largest_files) {
-                $path = Escape-Html $file.path
-                $size = Format-Bytes $file.logical_bytes
-                Add-Section "<li><span class='path'>$path</span> · <span class='bytes'>$size</span></li>"
-            }
-            Add-Section '</ul></details>'
-        }
-        Add-Section '</details>'
+foreach ($item in $areas) {
+    $root = Escape-Html $item.root
+    $status = if ($item.error) { '无法读取' } elseif ($item.status -eq 'partial') { '部分覆盖' } else { '已分析' }
+    $partial = if ($item.stop_reason) { ' · ' + (Escape-Html (Get-ReasonLabel $item.stop_reason)) }
+    $badge = if ($status -eq '已分析') { 'status status-complete' } else { 'status' }
+    Add-Section "<details open><summary><span class='path'>$root</span> <span class='$badge'>$status$partial</span></summary>"
+    if ($item.error) {
+        $reason = Escape-Html $item.error
+        Add-Section "<p>$reason</p></details>"
+        continue
     }
+    $bytes = Format-Bytes $item.totals.logical_bytes
+    $files = Format-Count $item.totals.files
+    $dirs = Format-Count $item.totals.directories
+    Add-Section "<p class='muted'>已读 $files 个文件、$dirs 个目录，文件大小合计 $bytes。</p>"
+    $max = ($item.largest_directories | Measure-Object -Property logical_bytes -Maximum).Maximum
+    foreach ($dir in $item.largest_directories) {
+        $path = Escape-Html $dir.path
+        $size = Format-Bytes $dir.logical_bytes
+        $width = Get-Percent $dir.logical_bytes $max
+        Add-Section "<div class='rank'><div class='rank-label'><span class='path'>$path</span><b class='bytes'>$size</b></div><div class='meter' aria-hidden='true'><span style='width:$width%'></span></div></div>"
+    }
+    if ($item.totals.skipped) {
+        $reasons = foreach ($entry in $item.totals.skipped.PSObject.Properties) {
+            '{0} {1}' -f (Get-ReasonLabel $entry.Name), (Format-Count $entry.Value)
+        }
+        if ($reasons) {
+            $reason = Escape-Html ($reasons -join ' · ')
+            Add-Section "<p><small>跳过 $reason</small></p>"
+        }
+    }
+    if ($item.largest_files) {
+        Add-Section '<details><summary>查看最大文件</summary><ul class="files">'
+        foreach ($file in $item.largest_files) {
+            $path = Escape-Html $file.path
+            $size = Format-Bytes $file.logical_bytes
+            Add-Section "<li><span class='path'>$path</span> · <span class='bytes'>$size</span></li>"
+        }
+        Add-Section '</ul></details>'
+    }
+    Add-Section '</details>'
 }
-if (!$hasDirectoryData) {
+if (!$areas.Count) {
     Add-Section '<p>这轮只检查了已知位置。目录分析结果可以附在这份报告里。</p>'
 }
 Add-Section '</section>'
