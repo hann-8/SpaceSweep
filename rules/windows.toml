@@ -1,0 +1,80 @@
+[[rules]]
+id = "windows.old_temp"
+label = "旧用户临时文件"
+anchor = "local_app_data"
+path = "Temp"
+action = "old_temp"
+note = "只考虑此目录顶层的普通 .tmp 文件，创建和修改时间均超过 7 天。"
+
+[[rules]]
+id = "chrome.http_cache"
+label = "Chrome 网页磁盘缓存"
+anchor = "local_app_data"
+path = "Google/Chrome/User Data"
+profiles = true
+action = "usage"
+note = "网页磁盘缓存的用量。Chrome 可在设置中单独处理缓存的图片和文件。"
+
+[[rules]]
+id = "edge.http_cache"
+label = "Edge 网页磁盘缓存"
+anchor = "local_app_data"
+path = "Microsoft/Edge/User Data"
+profiles = true
+action = "usage"
+note = "浏览器的网页磁盘缓存用量。"
+
+[[rules]]
+id = "wechat.documents_new"
+label = "微信"
+anchor = "documents"
+path = "xwechat_files"
+action = "usage"
+note = "按常用数据目录识别，含用户资料，供查看占用。"
+
+[[rules]]
+id = "wechat.documents_legacy"
+label = "微信"
+anchor = "documents"
+path = "WeChat Files"
+action = "usage"
+note = "按常用数据目录识别，含用户资料，供查看占用。"
+
+[[rules]]
+id = "wechat.volume_new"
+label = "微信目录线索"
+anchor = "volume_root"
+path = "xwechat_files"
+action = "usage"
+note = "按卷根目录名称定位，归属有待与客户端的实际位置核对。"
+
+[[rules]]
+id = "wechat.volume_legacy"
+label = "微信目录线索"
+anchor = "volume_root"
+path = "WeChat Files"
+action = "usage"
+note = "按卷根目录名称定位，归属有待与客户端的实际位置核对。"
+
+[[rules]]
+id = "qq.documents"
+label = "QQ"
+anchor = "documents"
+path = "Tencent Files"
+action = "usage"
+note = "按常用数据目录识别，含用户资料，供查看占用。"
+
+[[rules]]
+id = "qq.volume"
+label = "QQ 目录线索"
+anchor = "volume_root"
+path = "Tencent Files"
+action = "usage"
+note = "按卷根目录名称定位，归属有待与客户端的实际位置核对。"
+
+[[rules]]
+id = "windows.downloads_installers"
+label = "下载中的安装包线索"
+anchor = "downloads"
+action = "installers"
+note = "下载目录顶层的安装格式文件，是否用完由用户判断。"
