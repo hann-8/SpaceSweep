@@ -33,14 +33,28 @@
 | 崩溃转储 | 当前用户默认 `CrashDumps` 里的 `.dmp`。深查也识别散落的 `程序.exe.进程号.dmp`，用开头四字节确认 Windows 进程转储格式。 [Windows Error Reporting](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps) · [转储文件头](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_header) |
 | 缩略图缓存 | 资源管理器目录里的 `thumbcache_` 数据库。 [Microsoft 缩略图机制](https://learn.microsoft.com/en-us/windows/win32/shell/thumbnail-providers) · [BleachBit 缩略图路径](https://github.com/bleachbit/bleachbit/blob/master/cleaners/windows_explorer.xml) |
 | 网页缓存 | Chrome、Edge 默认用户配置中的 `Cache/Cache_Data` 和 `Code Cache`。浏览器运行时也可统计。代码缓存列为黄色，清理后访问网页可能重新编译脚本。 [Chromium 生成代码缓存](https://chromium.googlesource.com/chromium/src/+/main/content/browser/code_cache/generated_code_cache_context.h) |
-| 通用应用缓存布局 | 深查和指定目录分析识别 Chromium 浏览器与桌面应用的磁盘缓存和脚本缓存、Firefox 的 `cache2` 和 npm 的 `_cacache`。按目录结构与索引或内容目录识别，可覆盖迁移到其他盘的配置。结果列为黄色。 [Electron 会话数据](https://www.electronjs.org/docs/latest/api/app#appgetpathname) · [Firefox HTTP 缓存](https://firefox-source-docs.mozilla.org/networking/cache2/doc.html) · [npm 缓存](https://docs.npmjs.com/cli/cache/) |
+| 通用应用缓存布局 | 快查、深查和指定目录分析均能识别 Chromium 浏览器与桌面应用的磁盘缓存和脚本缓存、Firefox 的 `cache2` 和 npm 的 `_cacache`。磁盘缓存支持旧版 `Cache` 和 `Cache/Cache_Data`，用索引及数据布局识别。结果列为黄色。 [Electron 会话数据](https://www.electronjs.org/docs/latest/api/app#appgetpathname) · [Firefox HTTP 缓存](https://firefox-source-docs.mozilla.org/networking/cache2/doc.html) · [npm 缓存](https://docs.npmjs.com/cli/cache/) |
+| 应用缓存、日志和崩溃记录线索 | 通过 Winapp2 的明确目录路径定位，并按实际读取的文件统计。报告展示软件、用途、位置和大小，列为绿色线索。 [Winapp2](https://github.com/MoscaDotTo/Winapp2) |
 | Edge 组件更新缓存 | 当前用户默认 Edge 用户数据根目录下的 `component_crx_cache`。统计顶层文件名由 64 个十六进制字符组成的更新包和 `metadata.json`，列为黄色。清理后组件更新时可能需要重新下载。 [Chromium CRX 缓存格式](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/update_client/crx_cache.cc) |
 | 软件包缓存 | npm 的 `_cacache`，pip 的 HTTP 和 wheel 缓存。在当前用户默认缓存位置查找。 [npm](https://docs.npmjs.com/cli/cache/) · [pip](https://pip.pypa.io/en/stable/topics/caching/) |
 | 临时产物 | 递归找超过七天的 `.tmp`。记录安装格式或程序名含 Setup、Installer 的线索，以及旁边存在同名目录的压缩包。 |
 
+## 日常快查的应用覆盖
+
+Rust 在当前用户 LocalAppData、Roaming AppData 和共享 ProgramData 的前 12 级目录寻找通用缓存结构。读取 Windows 当前用户和本机的 32 位、64 位卸载登记，从 `InstallLocation` 找到选定本地卷上的安装位置，在前 8 级目录寻找相同布局。缓存目录命中后按实际文件统计。跨盘或便携应用也能在逐盘深查时按结构识别。 [Windows 安装位置登记](https://learn.microsoft.com/en-us/windows/win32/msi/uninstall-registry-key) · [WebView2 用户数据目录](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder)
+
+随版本发布的 [`application-probes.tsv`](../rules/application-probes.tsv) 包含 912 条从 Winapp2 提取的路径。仅取 Windows 已知目录下的明确缓存、日志和转储目录，保留每条顶层或递归的读取范围。Rust 对比已统计的目录，避免同一范围重复计入。规则路径匹配用于发掘线索，执行资格由 `windows.toml` 和 Rust 复核。日常扫描使用本地数据。 [Winapp2 数据快照](https://github.com/MoscaDotTo/Winapp2/blob/f967330a5cf0e701954fb51726e85722d0d36487/Winapp2.ini) · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+更新目录时，从目标上游提交取得原始 `Winapp2.ini`，生成同格式的只读路径清单后重新构建。
+
+```powershell
+.\scripts\update-application-probes.ps1 -Winapp2Ini '<Winapp2.ini 路径>' -SourceCommit '<上游提交 SHA>'
+.\scripts\build.ps1
+```
+
 ## 应用覆盖路线
 
-先支持浏览器磁盘缓存的规则验证，并优先识别 QQ、微信实际占用。以下是逐步覆盖的对象和处理方向。报告以本机版本和路径的实际验证结果为准。
+下表按真实应用用途给出进一步定位和处理方向。报告以本机版本和路径的实际发现为准。
 
 当前可执行规则随二进制嵌入 `rules/windows.toml`。旧临时文件首版限于当前用户 LocalAppData 的 `Temp` 顶层普通 `.tmp` 文件。Chrome 规则限于 157 主版本的默认配置位置，要求检测到已验证的块文件布局且 Chrome 已退出。只匹配 `Cache/Cache_Data` 里的 `index`、`data_数字` 和 `f_六位十六进制` 普通文件。用实际 Chrome 的隔离配置验证了布局、清除后重建和样本 Cookie 保留。Edge、聊天数据和安装包按发现项展示。 [Chromium 块文件实现](https://chromium.googlesource.com/chromium/chromium/+/HEAD/net/disk_cache/blockfile/backend_worker_v3.cc)
 

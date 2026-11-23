@@ -59,10 +59,14 @@ impl Review {
 }
 
 pub fn annotate(findings: &mut [Finding]) {
-    let app_data: Vec<_> = [Folder::LocalAppData, Folder::RoamingAppData]
-        .into_iter()
-        .filter_map(|folder| folder.known().ok())
-        .collect();
+    let app_data: Vec<_> = [
+        Folder::LocalAppData,
+        Folder::RoamingAppData,
+        Folder::ProgramData,
+    ]
+    .into_iter()
+    .filter_map(|folder| folder.known().ok())
+    .collect();
     for finding in findings {
         if finding.review_level == ReviewLevel::NeedsReview {
             finding.review = describe(finding.kind, &finding.path, &app_data);
@@ -72,7 +76,14 @@ pub fn annotate(findings: &mut [Finding]) {
 
 fn describe(kind: Kind, path: &Path, app_data: &[PathBuf]) -> Option<Review> {
     let owner = match kind {
-        Kind::BrowserCache => cache_owner(path.parent()?.parent()?, app_data),
+        Kind::BrowserCache => {
+            let cache = if path.file_name()?.eq_ignore_ascii_case("Cache_Data") {
+                path.parent()?
+            } else {
+                path
+            };
+            cache_owner(cache.parent()?, app_data)
+        }
         Kind::BrowserCodeCache | Kind::BrowserComponentCache => {
             cache_owner(path.parent()?, app_data)
         }

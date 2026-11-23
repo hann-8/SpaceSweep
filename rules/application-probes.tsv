@@ -1,0 +1,917 @@
+# Adapted from Winapp2.ini by the Winapp2 project and its contributors.
+# Source https://github.com/MoscaDotTo/Winapp2/blob/f967330a5cf0e701954fb51726e85722d0d36487/Winapp2.ini
+# This filtered data is licensed under CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/
+# Selected cache, diagnostic log and crash directories with exact paths. Deletion actions have been removed.
+# Anchor, purpose, depth, original entry label and relative path are tab separated.
+local	crash_reports	tree	1Browser Telemetry	1browser/1browser/User Data/Crash Reports
+local	logs	top	SyncBackFree	2BrightSparks/SyncBackFree/Logs
+local	cache	tree	3SwitcheD	3SwitcheD/cache
+local	logs	tree	Abelssoft GClean	Abelssoft/GoogleClean/log
+local	cache	tree	ACDSee Photo Studio	ACD Systems/GeoTag/Cache
+local	logs	tree	ACDSee Photo Studio	ACD Systems/Logs
+local	logs	tree	Ashampoo Action Click	Action Click/Logs
+local	crash_reports	tree	Ashampoo Action Click	ActionClick.WebView2/EBWebView/Crash Reports
+local	cache	tree	Ashampoo Action Click	ActionClick.WebView2/EBWebView/Default/Shared Dictionary/cache
+local	cache	tree	Adobe Acrobat	Adobe/Acrobat/11.0/Cache
+local	cache	tree	Adobe Acrobat	Adobe/AcroCef/DC/Acrobat/Cache
+local	logs	top	AirDC++	AirDC++/Logs
+local	logs	top	Amazon Cloud Player	Amazon Cloud Player/Logs
+local	crash_reports	tree	Amazon Games	Amazon Games/Data/Dumps
+local	logs	tree	Amazon Games	Amazon Games/Data/Logs
+local	logs	top	Amazon Music	Amazon Music/Logs
+local	cache	top	AMD	AMD/RadeonSoftware/Cache
+local	logs	top	AMID EVIL	AmidEvil/Saved/Logs
+local	logs	top	Ankama Wakfu	Ankama/Wakfu/Game/logs
+local	logs	top	Ankama Wakfu	Ankama/Wakfu/Logs
+local	logs	top	Ankama Wakfu	Ankama/Wakfu/user_data/Game/Logs
+local	logs	top	Ankama Wakfu	Ankama/Wakfu/user_data/Logs
+local	logs	top	AmoyShare AnyEraser	AnyEraser/logs
+local	cache	top	AmoyShare AnyMusic	AnyMusic/Cache/QtWebEngine/Default/Cache
+local	crash_reports	tree	AOL Shield Telemetry	AOL/AOL Shield/User Data/Crash Reports
+local	cache	top	AOMEI Backupper	AOMEI Backupper/cache
+local	logs	tree	Acer Clear.fi	AOP SDK/acer infra/acer/SyncAgent/logs
+local	logs	top	ApexDC++	ApexDC++/Logs
+local	logs	top	Artipic	Artipic AB/Artipic/log
+local	cache	tree	Ashampoo Video Converter	Ashampoo Video Converter/cache
+local	logs	top	Ashampoo App	Ashampoo/Ashampoo App/logs
+local	crash_reports	tree	Ashampoo App	Ashampoo/Ashampoo App/webview/EBWebView/Crash Reports
+local	cache	tree	Ashampoo App	Ashampoo/Ashampoo App/webview/EBWebView/Default/Shared Dictionary/cache
+local	cache	tree	Logitech ASTRO C40 TR Configuration Software	Astro Gaming/ASTRO C40 TR Configuration Software/cache
+local	crash_reports	top	Audacity	Audacity/CrashReports
+local	crash_reports	tree	Avast Secure Browser Telemetry	AVAST Software/Browser/CrashReports
+local	crash_reports	tree	Avast Secure Browser Telemetry	Avast Software/Browser/User Data/Crash Reports
+local	crash_reports	tree	AVG Secure Browser Telemetry	AVG/Browser/User Data/Crash Reports
+local	logs	tree	AVG	Avg/Log
+local	cache	tree	Avid	Avid/Pro Tools/Cache
+local	crash_reports	tree	Avira Secure Browser Telemetry	Avira/Browser/CrashReports
+local	crash_reports	tree	Avira Secure Browser Telemetry	Avira/Browser/User Data/Crash Reports
+local	logs	top	Avira System Speedup	AviraSpeedup/logs
+local	logs	tree	Battle.net	Battle.net/Logs
+local	crash_reports	tree	uTorrent	BitTorrentHelper/crashdumps
+local	cache	tree	Battle.net	Blizzard Entertainment/Battle.net/Cache
+local	cache	tree	Hearthstone	Blizzard/Hearthstone/Cache
+local	logs	top	Hearthstone	Blizzard/Hearthstone/Logs
+local	logs	tree	Bloodstained: Ritual of the Night	BloodstainedRotN/Saved/Logs
+local	logs	tree	inZOI	BlueClient/Saved/Logs
+local	logs	top	Box Drive	Box/Box/logs
+local	crash_reports	tree	Brave Origin Telemetry	BraveSoftware/Brave-Origin/User Data/Crash Reports
+local	crash_reports	tree	Brave Telemetry	BraveSoftware/CrashReports
+local	crash_reports	tree	BriskBard Telemetry	BriskBard/Crash Reports
+local	crash_reports	tree	BriskBard Telemetry	BriskBard/WebView/UserData/EBWebView/Crash Reports
+local	crash_reports	tree	BrowserOS Telemetry	BrowserOS/BrowserOS/User Data/Crash Reports
+local	cache	tree	MKVToolNix GUI	bunkus.org/MKVToolNix-Gui/Cache
+local	logs	top	XPhone	C4B/Log
+local	cache	tree	Native Instruments Software	Cache/Native Instruments/Native Access/Cache
+local	crash_reports	tree	CCleaner Browser Telemetry	CCleaner Browser/CrashReports
+local	crash_reports	tree	CCleaner Browser Telemetry	CCleaner Browser/User Data/Crash Reports
+local	cache	tree	CefSharp	CefSharp/Cache
+local	crash_reports	tree	Cent Browser Telemetry	CentBrowser/User Data/Crash Reports
+local	crash_reports	tree	Chromium Telemetry	Chromium/User Data/Crash Reports
+local	logs	top	Citrix Receiver	Citrix/AuthManager/Logs
+local	logs	top	Citrix Receiver	Citrix/Citrix Files/Logs
+local	logs	tree	Acer Clear.fi	Clear.fi/AcerCloud/SyncAgent/logs
+local	logs	tree	Acer Clear.fi	Clear.fi/log
+local	logs	top	CobraTek PC Info	CobraTek/PC Info/Log
+local	crash_reports	tree	Coc Coc Telemetry	CocCoc/Browser/User Data/Crash Reports
+local	crash_reports	tree	Coc Coc Telemetry	CocCoc/CrashReports
+local	crash_reports	tree	Ashampoo Money	com.ashampoo.money/EBWebView/Crash Reports
+local	cache	tree	Ashampoo Money	com.ashampoo.money/EBWebView/Default/Shared Dictionary/cache
+local	crash_reports	tree	Comodo Dragon Telemetry	Comodo/Dragon/User Data/Crash Reports
+local	logs	tree	Conceiva Mezzmo	Conceiva/Logs
+local	logs	tree	Epic Games Launcher	CrashReportClient/Saved/Logs
+local	crash_reports	tree	Cromite Telemetry	Cromite/User Data/Crash Reports
+local	cache	tree	DraftSight	Dassault Systemes/DraftSight/cache
+local	logs	top	MagicLine4NX	DreamSecurity/MagicLine4NX/Logs
+local	crash_reports	tree	Dropbox	Dropbox/CrashReports
+local	logs	tree	Dropbox	Dropbox/Logs
+local	logs	tree	DVDVideoSoft	DVDVideoSoftTB/Logs
+local	cache	tree	EA App	EA Core/Cache
+local	cache	tree	Microsoft Xbox	EAConnect_microsoft/Cache
+local	cache	tree	EA App	EADesktop/cache
+local	crash_reports	tree	Ecosia Browser Telemetry	EcosiaBrowser/User Data/Crash Reports
+local	crash_reports	top	Loadout	EdgeOfReality/Loudout/CrashReports
+local	logs	top	EA App	Electronic Arts/EA Desktop/Logs
+local	logs	top	eMule	eMule/logs
+local	logs	top	Epic Games Launcher	Epic Games/Epic Online Services/EOSInstaller/Logs
+local	logs	tree	Epic Games Launcher	EpicGamesLauncher/Saved/Logs
+local	logs	top	Erosion	Erosion/Saved/Logs
+local	logs	tree	F-Secure	F-Secure/Log
+local	crash_reports	tree	Flexibits Fantastical	Fantastical/Cache/WebView/EBWebView/Crash Reports
+local	cache	tree	Flexibits Fantastical	Fantastical/Cache/WebView/EBWebView/Default/Shared Dictionary/cache
+local	logs	top	Flexibits Fantastical	Fantastical/Logs
+local	logs	top	Fast Clean Pro	Fastcleanpro/logs
+local	logs	top	Fort Firewall	Fort Firewall/Logs
+local	logs	tree	FreeFixer	FreeFixer/Logs
+local	cache	tree	SocialFolders	ftopia/SocialFolders/Cache
+local	crash_reports	tree	SocialFolders	ftopia/SocialFolders/Dumps
+local	cache	tree	Shattered Horizon	Futuremark/Shattered Horizon/cache
+local	crash_reports	tree	Genspark Browser Telemetry	GensparkSoftware/Genspark-Browser/User Data/Crash Reports
+local	crash_reports	tree	Ghost Browser Telemetry	GhostBrowser/User Data/Crash Reports
+local	crash_reports	tree	Google Drive	Google/Drive/CrashReports
+local	logs	top	Google Drive	Google/drivefs/Logs
+local	crash_reports	tree	Google Quick Share	Google/Nearby/Sharing/CrashDumps
+local	cache	tree	BlueStacks	HD-Player/cache
+local	crash_reports	tree	Helium Telemetry	imput/Helium/User Data/Crash Reports
+local	logs	top	The Outer Worlds	Indiana/Saved/Logs
+local	logs	tree	Intuit QuickBooks	Intuit/QuickBooks/Log
+local	crash_reports	tree	Iridium Telemetry	Iridium/User Data/Crash Reports
+local	logs	top	It Takes Two	ItTakesTwo/Saved/Logs
+local	crash_reports	tree	Jatter Telemetry	Jatter/Jatter/User Data/Crash Reports
+local	cache	tree	Jellyfin Media Player	Jellyfin Media Player/cache
+local	cache	tree	JetBrains dotPeek v1.1	JetBrains/dotPeek/v1.1/Caches
+local	logs	top	Daum Streaming Agent Manager	KakaoLiveAgent/Log
+local	logs	top	Kaseto	Kaseto/Logs
+local	cache	tree	Kobo Desktop	Kobo/Kobo Desktop Edition/WebCache
+local	cache	tree	Krita	krita/cache
+local	logs	top	Larian Launcher	Larian Studios/logs
+local	cache	tree	Leawo Blu-ray Ripper	Leawo Blu-ray Ripper/Cache
+local	cache	tree	Leawo Prof. Media	Leawo Prof/cache
+local	cache	tree	LINE Messenger	LINE/Cache
+local	cache	tree	LINE Messenger Plugin	LineCall/Cache
+local	cache	tree	LINE Messenger Plugin	LineMediaPlayer/Cache
+local	cache	tree	Scrivener	LiteratureandLatte/Scrivener/Cache
+local	crash_reports	tree	Maxthon Telemetry	Maxthon/User Data/Crash Reports
+local	logs	top	Meausoft Mo-Search	Meauxsoft/Mo-Search4.0/Logs
+local	crash_reports	top	MEGAsync	Mega Limited/MEGAsync/crashDumps
+local	logs	top	MEGAsync	Mega Limited/MEGAsync/logs
+local	logs	top	Melodics	Melodics/Melodics/Logs
+local	logs	top	Windows Logs	Microsoft/msipc/Logs
+local	crash_reports	tree	Microsoft Outlook For Windows	Microsoft/Olk/EBWebView/Crash Reports
+local	cache	tree	Microsoft Outlook For Windows	Microsoft/Olk/EBWebView/Default/Shared Dictionary/cache
+local	logs	tree	Microsoft Outlook For Windows	Microsoft/Olk/Logs
+local	logs	tree	Microsoft OneDrive	Microsoft/OneDrive/Logs
+local	logs	tree	Microsoft OneDrive	Microsoft/OneDrive/Setup/Logs
+local	logs	top	Microsoft OneDrive	Microsoft/SkyDrive/logs
+local	logs	tree	Microsoft OneDrive	Microsoft/Windows/OneDrive/logs
+local	cache	tree	Stranglehold	Midway/Stranglehold/Cache
+local	cache	tree	Movavi Screen Recorder	Movavi Screen Recorder/Cache
+local	logs	tree	Movavi	Movavi/Logs
+local	cache	tree	Movavi Screen Recorder	Movavi/Screen Recorder/Cache
+local	cache	top	Movavi Video Editor	Movavi/SharedData/VideoEditor/waveforms/cache
+local	cache	tree	Movavi Video Editor	Movavi/Video Editor/Cache
+local	cache	tree	Movavi Video Suite	Movavi/Video Suite/Cache
+local	cache	top	mpv	mpv/cache
+local	logs	top	Mullvad VPN	Mullvad VPN/logs
+local	logs	top	Muse Group Muse Hub	Muse Hub/Logs
+local	logs	tree	MyLanViewer	MyLanViewer/Logs
+local	logs	top	Myst	Myst/Saved/Logs
+local	crash_reports	tree	NAVER Whale Telemetry	Naver/Naver Whale/User Data/Crash Reports
+local	crash_reports	tree	Norton Neo Telemetry	NEO/User Data/Crash Reports
+local	logs	tree	Nexus Mods App	NexusMods.App/Logs
+local	cache	top	Nikon ViewNX 2 Pic Viewer	Nikon/ViewNX 2/Cache
+local	logs	top	NordVPN	NordVPN/logs
+local	crash_reports	tree	Norton Secure Browser Telemetry	Norton/Browser/User Data/Crash Reports
+local	cache	tree	Microsoft OneDrive	OneDrive/Cache
+local	logs	top	osu!	osu!/logs
+local	cache	tree	NVIDIA Omniverse	ov/cache
+local	logs	tree	PACE Eden	PACE/Eden/Logs
+local	logs	top	rocksdanister Lively Wallpaper	Packages/12030rocksdanister.LivelyWallpaper_97hta09mmv6hy/LocalCache/Local/Lively Wallpaper/logs
+local	cache	tree	ShareX	Packages/19568ShareX.ShareX_egrzcvs15399j/LocalState/Cache
+local	logs	top	Mixilab Animotica	Packages/24711Mixilab.Animotica_c39s816dkej80/LocalState/Logs
+local	crash_reports	tree	LibreWolf Telemetry	Packages/31856maltejur.LibreWolf_ssmwz6s360tct/LocalCache/Roaming/librewolf/Crash Reports
+local	logs	top	HP HyperX NGENUITY	Packages/33C30B79.HyperXNGenuity_0a78dr3hq0pvt/LocalState/Logs
+local	crash_reports	tree	HP OMEN Gaming Hub	Packages/AD2F1837.OMENCommandCenter_v10z8vjag6ke6/LocalCache/Local/LeftNav/WebViewCache/EBWebView/Crash Reports
+local	cache	tree	HP OMEN Gaming Hub	Packages/AD2F1837.OMENCommandCenter_v10z8vjag6ke6/LocalCache/Local/LeftNav/WebViewCache/EBWebView/Default/Shared Dictionary/cache
+local	crash_reports	tree	HP OMEN Gaming Hub	Packages/AD2F1837.OMENCommandCenter_v10z8vjag6ke6/LocalState/EBWebView/Crash Reports
+local	cache	tree	HP OMEN Gaming Hub	Packages/AD2F1837.OMENCommandCenter_v10z8vjag6ke6/LocalState/EBWebView/Default/Shared Dictionary/cache
+local	crash_reports	tree	Adobe Fresco	Packages/Adobe.Fresco_pc75e8sa7ep4e/LocalState/EBWebView/Crash Reports
+local	cache	tree	Adobe Fresco	Packages/Adobe.Fresco_pc75e8sa7ep4e/LocalState/EBWebView/Default/Shared Dictionary/cache
+local	logs	top	Amazon Music	Packages/AmazonMobileLLC.AmazonMusic_kc6t79cpj4tp0/LocalCache/Local/Amazon Music/Logs
+local	logs	top	Apple Devices	Packages/AppleInc.AppleDevices_nzyj5cx40ttqa/LocalCache/Local/Logs
+local	logs	top	Apple Devices	Packages/AppleInc.AppleDevices_nzyj5cx40ttqa/LocalCache/Roaming/Apple Computer/Logs
+local	logs	top	Apple Devices	Packages/AppleInc.AppleDevices_nzyj5cx40ttqa/LocalState/Logs
+local	logs	top	Apple Music	Packages/AppleInc.AppleMusicWin_nzyj5cx40ttqa/LocalCache/Local/Logs
+local	logs	top	Apple Music	Packages/AppleInc.AppleMusicWin_nzyj5cx40ttqa/LocalCache/Roaming/Apple Computer/Logs
+local	logs	top	Apple Music	Packages/AppleInc.AppleMusicWin_nzyj5cx40ttqa/LocalState/Logs
+local	logs	top	Apple TV	Packages/AppleInc.AppleTVWin_nzyj5cx40ttqa/LocalCache/local/Logs
+local	logs	top	Apple TV	Packages/AppleInc.AppleTVWin_nzyj5cx40ttqa/LocalCache/Logs
+local	logs	top	Apple TV	Packages/AppleInc.AppleTVWin_nzyj5cx40ttqa/LocalCache/Roaming/Apple Computer/Logs
+local	logs	top	Apple TV	Packages/AppleInc.AppleTVWin_nzyj5cx40ttqa/LocalState/Logs
+local	logs	tree	Apple iCloud	Packages/AppleInc.iCloud_nzyj5cx40ttqa/LocalCache/Local/Logs
+local	cache	tree	Apple iTunes	Packages/AppleInc.iTunes_nzyj5cx40ttqa/LocalCache/Local/Microsoft/Windows/Caches
+local	logs	tree	Apple iTunes	Packages/AppleInc.iTunes_nzyj5cx40ttqa/LocalCache/Roaming/Apple Computer/Logs
+local	cache	tree	Apple iTunes	Packages/AppleInc.iTunes_nzyj5cx40ttqa/SystemAppData/Helium/Cache
+local	cache	tree	Intel Graphics Command Center	Packages/AppUp.IntelGraphicsExperience_8j3eq9eme6ctt/LocalState/Games2/cache
+local	logs	top	ASUS GlideX	Packages/B9ECED6F.Glidex_qmba6cd70vzyy/LocalState/log
+local	cache	top	ASUS ProArt Creator Hub	Packages/B9ECED6F.ProArtCreatorCenter_qmba6cd70vzyy/LocalState/ASUS/ProArt Creator Hub/Bulletin/Cache
+local	logs	top	ASUS ProArt Creator Hub	Packages/B9ECED6F.ProArtCreatorCenter_qmba6cd70vzyy/LocalState/log
+local	logs	top	ASUS USB Charger Plus	Packages/B9ECED6F.USBChargerPlus_qmba6cd70vzyy/LocalState/log
+local	crash_reports	tree	Be My Eyes	Packages/BeMyEyes.BeMyEyes_7yeb8xxw19svt/LocalCache/Local/Be My Eyes/EBWebView/Crash Reports
+local	cache	tree	Be My Eyes	Packages/BeMyEyes.BeMyEyes_7yeb8xxw19svt/LocalCache/Local/Be My Eyes/EBWebView/Default/Shared Dictionary/cache
+local	logs	top	Be My Eyes	Packages/BeMyEyes.BeMyEyes_7yeb8xxw19svt/LocalCache/Local/BeMyEyes/Be My Eyes/logs
+local	logs	top	Bree AI	Packages/BREEAITECHPTE.LTD.BreeAI_z5nd0wyapdvva/LocalCache/Local/BreeAI/Logs
+local	logs	top	Anthropic Claude	Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/logs
+local	crash_reports	tree	Microsoft Clipchamp	Packages/Clipchamp.Clipchamp_yxz26nhyzhsrt/LocalState/EBWebView/Crash Reports
+local	cache	tree	Microsoft Clipchamp	Packages/Clipchamp.Clipchamp_yxz26nhyzhsrt/LocalState/EBWebView/Default/Shared Dictionary/cache
+local	cache	tree	Dell SupportAssist	Packages/DellInc.DellSupportAssistforPCs_htrsf667h5kn2/LocalCache/Local/Microsoft/Windows/Caches
+local	cache	top	Dell Update	Packages/DellInc.DellUpdate_htrsf667h5kn2/LocalCache/Local/Microsoft/Windows/Caches
+local	logs	top	Dell My Dell	Packages/DellInc.MyDell_htrsf667h5kn2/LocalState/Logs
+local	logs	tree	Dropbox	Packages/DropboxInc.Dropbox_xbfy0k16fey96/LocalCache/Local/Dropbox/Logs
+local	crash_reports	tree	Lenovo Vantage	Packages/E046963F.LenovoCompanion_k1h2ywk1493x8/LocalState/UDF/EBWebView/Crash Reports
+local	cache	tree	Lenovo Vantage	Packages/E046963F.LenovoCompanion_k1h2ywk1493x8/LocalState/UDF/EBWebView/Default/Shared Dictionary/cache
+local	crash_reports	tree	GoldKey Acellus	Packages/GoldKeyCorporation.Acellus_v2rn50m687qry/LocalState/EBWebView/Crash Reports
+local	cache	tree	GoldKey Acellus	Packages/GoldKeyCorporation.Acellus_v2rn50m687qry/LocalState/EBWebView/Default/Shared Dictionary/cache
+local	crash_reports	tree	Microsoft Bing Wallpapers	Packages/Microsoft.BingWallpaper_8wekyb3d8bbwe/LocalState/BingWallpaper_Widget/1001/EBWebView/Crash Reports
+local	cache	tree	Microsoft Bing Wallpapers	Packages/Microsoft.BingWallpaper_8wekyb3d8bbwe/LocalState/BingWallpaper_Widget/1001/EBWebView/Default/Shared Dictionary/cache
+local	cache	tree	Windows Get Help	Packages/Microsoft.GetHelp_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Tips	Packages/Microsoft.Getstarted_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Lock Screen	Packages/Microsoft.LockApp_cw5n1h2txyewy/LocalState/Cache
+local	cache	tree	Microsoft PlayReady	Packages/Microsoft.Media.PlayReadyClient_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Messaging	Packages/Microsoft.Messaging_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft 3D Viewer	Packages/Microsoft.Microsoft3DViewer_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Minecraft	Packages/Microsoft.MinecraftUWP_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Mixed Reality Portal	Packages/Microsoft.MixedReality.Portal_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Sway	Packages/Microsoft.Office.Sway_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Mobile Plans	Packages/Microsoft.OneConnect_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft People	Packages/Microsoft.People_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Print 3D	Packages/Microsoft.Print3D_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Snipping Tool	Packages/Microsoft.ScreenSketch_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Store	Packages/Microsoft.StorePurchaseApp_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Calculator	Packages/Microsoft.WindowsCalculator_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Camera	Packages/Microsoft.WindowsCamera_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Feedback Hub	Packages/Microsoft.WindowsFeedbackHub_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Scan	Packages/Microsoft.WindowsScan_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Windows Voice Recorder	Packages/Microsoft.WindowsSoundRecorder_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Store	Packages/Microsoft.WindowsStore_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Phone Link	Packages/Microsoft.YourPhone_8wekyb3d8bbwe/LocalState/Cache
+local	crash_reports	tree	Mozilla Firefox Telemetry	Packages/Mozilla.Firefox_n80bbvh6b1yt2/LocalCache/Roaming/Mozilla/Firefox/Crash Reports
+local	crash_reports	tree	Thunderbird Telemetry	Packages/MozillaThunderbird.MozillaThunderbirdRelease_h5892qc0xkpca/LocalCache/Roaming/Thunderbird/Crash Reports
+local	crash_reports	tree	Thunderbird Telemetry	Packages/MozillaThunderbird.MZLA_h5892qc0xkpca/LocalCache/Roaming/Thunderbird/Crash Reports
+local	crash_reports	tree	Thunderbird Telemetry	Packages/MozillaThunderbird.ThunderbirdBeta_h5892qc0xkpca/LocalCache/Roaming/Thunderbird/Crash Reports
+local	logs	top	Samsung Galaxy Buds	Packages/SAMSUNGELECTRONICSCO.LTD.GalaxyBuds_3c1yjt4zspk6g/LocalState/Logs
+local	logs	tree	Samsung Gallery	Packages/SAMSUNGELECTRONICSCO.LTD.PCGallery_3c1yjt4zspk6g/LocalState/Logs
+local	logs	top	Samsung PENUP	Packages/SAMSUNGELECTRONICSCO.LTD.PENUP_3c1yjt4zspk6g/LocalState/Logs
+local	cache	top	Samsung PENUP	Packages/SAMSUNGELECTRONICSCO.LTD.PENUP_3c1yjt4zspk6g/LocalState/SPenSDK30/cache
+local	crash_reports	tree	Samsung Account	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungAccount_3c1yjt4zspk6g/LocalState/EBWebView/Crash Reports
+local	cache	tree	Samsung Account	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungAccount_3c1yjt4zspk6g/LocalState/EBWebView/Default/Shared Dictionary/cache
+local	logs	top	Samsung Account	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungAccount_3c1yjt4zspk6g/LocalState/logs
+local	logs	top	Samsung Cloud	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungCloudPlatformManag_3c1yjt4zspk6g/LocalState/logs
+local	logs	top	Samsung Find	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungFind_3c1yjt4zspk6g/LocalState/logs
+local	logs	top	Samsung Parental Controls	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungParentalControls_3c1yjt4zspk6g/LocalState/logs
+local	logs	tree	Samsung Pass	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungPass_3c1yjt4zspk6g/LocalState/Logs
+local	logs	top	Samsung Device Care	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungPCCleaner_3c1yjt4zspk6g/RoamingState/Samsung/SamsungDeviceCare/logs
+local	logs	top	Samsung Phone	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungPhone_3c1yjt4zspk6g/LocalState/Logs
+local	logs	tree	Samsung Quick Search	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungQuickSearch_3c1yjt4zspk6g/LocalState/logs
+local	logs	top	Samsung Screen Recorder	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungScreenRecording_3c1yjt4zspk6g/RoamingState/Samsung/ScreenRecorder/logs
+local	logs	top	Samsung Studio	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungStudio_3c1yjt4zspk6g/LocalState/Logs
+local	logs	top	Samsung Update	Packages/SAMSUNGELECTRONICSCO.LTD.SamsungUpdate_3c1yjt4zspk6g/LocalState/log
+local	crash_reports	tree	Samsung SmartThings	Packages/SAMSUNGELECTRONICSCO.LTD.SmartThingsWindows_3c1yjt4zspk6g/LocalState/EBWebView/Crash Reports
+local	cache	tree	Samsung SmartThings	Packages/SAMSUNGELECTRONICSCO.LTD.SmartThingsWindows_3c1yjt4zspk6g/LocalState/EBWebView/Default/Shared Dictionary/cache
+local	logs	top	Samsung SmartThings	Packages/SAMSUNGELECTRONICSCO.LTD.SmartThingsWindows_3c1yjt4zspk6g/LocalState/logs
+local	logs	tree	Samsung Notes	Packages/SAMSUNGELECTRONICSCoLtd.SamsungNotes_wyx1vj98g3asy/LocalState/Logs
+local	cache	top	Samsung Notes	Packages/SAMSUNGELECTRONICSCoLtd.SamsungNotes_wyx1vj98g3asy/LocalState/SPenSDK30/cache
+local	crash_reports	tree	Arc Telemetry	Packages/TheBrowserCompany.Arc_ttt1ap7aakyb4/LocalCache/Local/Arc/User Data/Crash Reports
+local	cache	tree	TuneIn Radio	Packages/TuneIn.TuneInRadio_6bhtb546zcxnj/LocalCache/Cache
+local	cache	tree	Windows Get Help	Packages/Windows.ContactSupport_8wekyb3d8bbwe/LocalState/Cache
+local	cache	tree	Microsoft Store	Packages/winstore_8wekyb3d8bbwe/LocalState/Cache
+local	logs	top	Palia	Palia/Saved/Logs
+local	crash_reports	tree	Microsoft PC Manager	PC Manager Store/webview2/EBWebView/Crash Reports
+local	cache	tree	Microsoft PC Manager	PC Manager Store/webview2/EBWebView/Default/Shared Dictionary/cache
+local	crash_reports	tree	Comet Telemetry	Perplexity/Comet/User Data/Crash Reports
+local	cache	tree	Python	Pip/cache
+local	logs	top	AmoyShare Pixeraser	Pixeraser/logs
+local	logs	top	Plantronics Spokes	Plantronics/Logs
+local	crash_reports	tree	Plex Media Server	Plex Media Server/Crash Reports
+local	logs	tree	Plex Media Server	Plex Media Server/Logs
+local	cache	tree	Plex Media Server	Plex Media Server/Plug-in Support/Caches
+local	cache	tree	Plex	Plex/cache
+local	cache	top	Plex Media Server	Plex/Cache/qtwebengine/Default/Cache
+local	logs	top	Plex	Plex/logs
+local	cache	tree	Plex	Plex/Plex Media Server/Cache
+local	logs	top	Plex	Plex/Plex Media Server/logs
+local	logs	top	ProcessLasso	ProcessLasso/Logs
+local	cache	top	qBittorrent	qBittorrent/cache
+local	logs	top	qBittorrent	qBittorrent/logs
+local	logs	top	Qiqqa	Quantisle/Qiqqa/Logs
+local	cache	tree	.NET Reflector	Red Gate/.NET Reflector 6/Cache
+local	logs	top	Riding Academy 3D	Riding Academy 3D/logs
+local	logs	tree	Riot Client	Riot Games/Riot Client/Logs
+local	logs	tree	Roblox	Roblox/Logs
+local	logs	top	RoGlass	RoGlass/Logs
+local	logs	top	SABnzbd	sabnzbd/logs
+local	cache	top	Caesium Image Compressor	SaeraSoft/Caesium Image Compressor/cache
+local	crash_reports	tree	Samsung Internet Telemetry	Samsung/Internet/User Data/Crash Reports
+local	crash_reports	tree	AOL Shield Telemetry	SentryBay/CrashReports
+local	crash_reports	tree	Shift Telemetry	Shift/User Data/Crash Reports
+local	logs	tree	ShooterGame	ShooterGame/Saved/Logs
+local	crash_reports	tree	Sigma Telemetry	Sigma/User Data/Crash Reports
+local	cache	tree	Hue Sync	Signify/huesync/cache
+local	cache	tree	Enpass	Sinew Software Systems Pvt Ltd/Enpass/cache
+local	crash_reports	tree	FlashPeak SlimJet Telemetry	Slimjet/User Data/Crash Reports
+local	cache	tree	Stremio	Smart Code LTD/Stremio/Cache
+local	logs	top	Solus	Solus/Saved/Logs
+local	logs	top	SporTV	SporTV/Logs
+local	cache	tree	Stellarium	Stellarium/Cache
+local	cache	tree	Stellarium	stellarium/stellarium/cache
+local	logs	top	SterJo NetStalker	SterJo NetStalker/Logs
+local	crash_reports	tree	Supermium Telemetry	Supermium/User Data/Crash Reports
+local	logs	top	TeamSpeak 3	TeamSpeak 3 Client/config/logs
+local	logs	tree	Camtasia	TechSmith/Logs
+local	crash_reports	tree	Snagit	TechSmith/Snagit/CrashDumps
+local	crash_reports	tree	QQBrowser Telemetry	Tencent/QQBrowser/User Data/Crash Reports
+local	logs	top	Observer	TheObserver/Saved/Logs
+local	crash_reports	tree	Thorium Telemetry	Thorium/User Data/Crash Reports
+local	logs	top	Darksiders Genesis	THQ Nordic/Darksiders Genesis/Saved/Logs
+local	logs	top	TK-Data	tkdata/Logs
+local	cache	tree	Tomahawk	Tomahawk/Tomahawk/Cache
+local	cache	tree	Tomboy	Tomboy/Cache
+local	cache	tree	TomTom	TomTom/HOME3/cache
+local	logs	top	HP	TouchSmartData/Log
+local	logs	top	IBM Security Trusteer Rapport	Trusteer/Rapport/user/logs
+local	crash_reports	tree	UC Telemetry	UC/User Data/Crash Reports
+local	logs	top	Vidmore Screen Recorder	Vidmore/Vidmore Screen Recorder/Logs
+local	cache	top	ManyCam	Visicom Media/ManyCam/Cache/QtWebEngine/Default/Cache
+local	crash_reports	tree	Vivaldi Telemetry	Vivaldi/User Data/Crash Reports
+local	logs	top	VMware Personal Desktop Virtualization	VMware/wdm/Logs
+local	logs	top	VoiCenter	VoiCenter/Logs
+local	crash_reports	tree	Wavebox Telemetry	Waveboxapp/User Data/Crash Reports
+local	cache	top	Waves Audio	Waves Audio/Waves Central/Cache/QtWebEngine/Default/Cache
+local	cache	tree	Western Digital Dashboard	Western Digital/Dashboard/cache/QtWebEngine/Default/Cache
+local	logs	top	WinZip	WinZip/WinZip Update Notifier/Log
+local	crash_reports	tree	Yandex Telemetry	Yandex/YandexBrowser/User Data/Crash Reports
+local	crash_reports	tree	Ulaa Telemetry	Zoho/Ulaa/User Data/Crash Reports
+local	logs	tree	Zynga Games	Zynga/Logs
+program_data	logs	tree	ClamWin	.clamwin/log
+program_data	logs	tree	Ad-Aware Antivirus	Ad-Aware Antivirus/Logs
+program_data	logs	top	Adobe Creative Cloud	Adobe/UPI/Log
+program_data	logs	top	ASUS Dial & Control Panel	ASUS/ASUS Dial Control Panel Toolkit/Log
+program_data	logs	top	ASUS GlideX	ASUS/GlideX/log
+program_data	logs	top	ASUS ProArt Creator Hub	ASUS/ProArt Creator Hub/log
+program_data	logs	tree	Avast	AVAST Software/Avast/log
+program_data	cache	tree	Avast Cleanup	Avast Software/Cleanup/Cache
+program_data	logs	tree	Avast Cleanup	Avast Software/Cleanup/log
+program_data	logs	tree	Avast Cleanup	Avast Software/Icarus/Logs
+program_data	cache	tree	AVG AntiVirus	AVG/Antivirus/SWCUData/Cache
+program_data	logs	top	AVG PC TuneUp	AVG/AVG TuneUp/log
+program_data	logs	top	AVG PC TuneUp	AVG/Icarus/Logs
+program_data	logs	tree	AVG AntiVirus	AVG/Persistent Data/Antivirus/Logs
+program_data	logs	tree	AVG PC TuneUp	AVG/TuneUp/log
+program_data	logs	top	Avira AntiVir Desktop	Avira/OptimizerHost/Logs
+program_data	logs	top	Avira System Speedup	Avira/SystemSpeedup/Logs
+program_data	logs	top	WinRemote	Banamalon/WinRemoteService/log
+program_data	logs	top	Diablo II/III	Battle.net/Setup/diablo3_engb/Log
+program_data	logs	top	Battle.net	Battle.net_components/battlenet_helpersvc/Logs
+program_data	logs	top	Big Fish Games	BigFishGamesCache/GameManager/log
+program_data	logs	top	Dragon Age: Origins	BioWare/Dragon Age/DA Updater/Logs
+program_data	cache	tree	CorelDRAW Graphics Suite X7	Bitstream/Font Navigator/6.0/Cache
+program_data	logs	tree	Blackmagic Design DaVinci Resolve	Blackmagic Design/DaVinci Resolve/Support/logs
+program_data	cache	tree	Battle.net	Blizzard Entertainment/Battle.net/Cache
+program_data	logs	tree	Blueberry Software Camigo	Blueberry Software/Camigo/Logs
+program_data	logs	tree	Blueberry Software FlashbackVideoConverter	Blueberry Software/FlashbackVideoConverter/Logs
+program_data	cache	tree	BlueStacks	BlueStacks/CefData/Cache
+program_data	crash_reports	tree	BlueStacks	BlueStacks_nxt/Dumps
+program_data	logs	top	Box Drive	Box/Box/Logs
+program_data	logs	top	Chocolatey	chocoportable/logs
+program_data	logs	top	Cisco Connect	Cisco Systems/Cisco Connect/Log
+program_data	logs	top	Anthropic Claude	Claude/Logs
+program_data	crash_reports	tree	Coc Coc Telemetry	CocCoc/CrashReports
+program_data	logs	top	CodeMeter	CodeMeter/Logs
+program_data	logs	top	Intuit QuickBooks	Common Files/Intuit/Quickbooks/qbupdate/log
+program_data	cache	tree	Creative Sound Blaster	Creative/Software Update/Cache
+program_data	logs	top	Creative Sound Blaster	Creative/Software Update/Log
+program_data	logs	top	AHA Dialer	DatacardService/log
+program_data	logs	top	Dropbox	Dropbox/Update/Log
+program_data	logs	top	DVD-Ranger	DVDRanger/Logs
+program_data	cache	tree	EA App	EA Core/Cache
+program_data	logs	top	EA App	EA Desktop/Logs
+program_data	logs	top	Electric Sheep	ElectricSheep/Logs
+program_data	logs	top	EA App	Electronic Arts/EA Core/logs
+program_data	logs	top	Net-Peeker	eMingSoftware/NetPeeker/Log
+program_data	logs	top	eMule	eMule/logs
+program_data	logs	top	Epic Games Launcher	Epic/EpicOnlineServices/EpicOnlineServicesHost/Logs
+program_data	logs	top	Epic Games Launcher	Epic/EpicOnlineServices/MainService/Logs
+program_data	logs	top	Foxit Reader	Foxit Software/Foxit PDF Reader/FoxitSensor/Log
+program_data	logs	top	Freemake Video Converter	Freemake/FreemakeUtilsService/ErrorReports/Logs
+program_data	logs	tree	G-Data	G Data/AVK/Log
+program_data	cache	tree	Garena	Garena/gxx/cache
+program_data	logs	top	Garena	Garena/gxx/log
+program_data	crash_reports	tree	GOG Galaxy	GOG.com/Galaxy/crashdumps
+program_data	logs	top	GOG Galaxy	GOG.com/Galaxy/logs
+program_data	crash_reports	top	Google Quick Share	Google/Nearby/Sharing/CrashDumps
+program_data	cache	top	Happy Cloud	HappyCloud/cache
+program_data	cache	tree	Tribes: Ascend	Hi-Rez Studios/BrowserCacheTribes/Default/Cache
+program_data	logs	top	Hi-Rez Studios	Hi-Rez Studios/HiPatchService/log
+program_data	logs	top	HitmanPro	HitmanPro/Logs
+program_data	logs	tree	Hotspot Shield	Hotspot Shield/system/logs
+program_data	logs	tree	Hotspot Shield	Hotspot Shield/user/logs
+program_data	logs	top	HP	HP/HP Touchpoint Analytics Client/Logs
+program_data	logs	tree	HP	HP/logs
+program_data	logs	top	inFlow Inventory	inFlow Inventory/Logs
+program_data	logs	tree	Intel Driver & Support Assistant	Intel/DSA/Logs
+program_data	logs	tree	Intel Extreme Tuning Utility	Intel/Intel Extreme Tuning Utility/Logs
+program_data	logs	tree	Intel	Intel/Logs
+program_data	logs	top	Intuit QuickBooks	Intuit/QBWebConnector/log
+program_data	logs	top	System Mechanic	Iolo Technologies/Logs
+program_data	logs	tree	System Mechanic	iolo/logs
+program_data	logs	tree	Ad-Aware Antivirus	Lavasoft/AntiMalware/Logs
+program_data	logs	tree	Adaware Web Companion	Lavasoft/Web Companion/Logs
+program_data	logs	top	Letasoft Sound Booster	Letasoft/Sound Booster/Logs
+program_data	logs	tree	Lexware	Lexware/elster/Log
+program_data	logs	tree	Lexware	Lexware/logs
+program_data	cache	top	Logitech G HUB	LGHUB/Cache
+program_data	cache	top	Logitech LogiOptions+	LogiOptionsPlus/Cache
+program_data	logs	top	Malwarebytes	Malwarebytes/MBAMService/logs
+program_data	cache	top	ManiaPlanet	ManiaPlanet/Cache
+program_data	logs	tree	McAfee	McAfee/AMCore/datreputation/Logs
+program_data	logs	tree	McAfee	McAfee/VirusScan/Logs
+program_data	cache	top	Microsoft PlayReady	Microsoft/PlayReady/Cache
+program_data	logs	tree	Windows Logs	Microsoft/Windows Security Health/Logs
+program_data	cache	tree	Microsoft PlayReady	Microsoft/Windows/DRM/Cache
+program_data	logs	tree	Huawei	MobileBrServ/log
+program_data	cache	top	Mullvad VPN	Mullvad VPN/cache
+program_data	logs	tree	Muse Group Muse Hub	MuseAuthService/Logs
+program_data	logs	top	NCH Software BroadWave Streaming Audio	NCH Software/BroadWave/Logs
+program_data	cache	tree	Nero TuneItUp	Nero/Nero TuneItUp/cache
+program_data	logs	top	Nero	Nero/NeroUpdate/Logs
+program_data	logs	tree	Norton	NortonInstaller/Logs
+program_data	crash_reports	top	NVIDIA Graphics Drivers	NVIDIA Corporation/CrashDumps
+program_data	logs	top	NVIDIA Broadcast	NVIDIA Corporation/NVIDIA Broadcast/logs
+program_data	logs	top	EA App	Origin/Logs
+program_data	logs	top	Panda Antivirus	Panda Security/Panda Devices Agent/Logs
+program_data	logs	top	Panda Antivirus	Panda Security/Panda Security Protection/Logs
+program_data	logs	top	Samsung Parental Controls	ParentalControls/Log
+program_data	logs	top	PC Optimizer Pro	PC Optimizer Pro/Logs
+program_data	logs	top	CCleaner	Piriform/CCleaner 7/log
+program_data	logs	tree	CCleaner	Piriform/Icarus/Logs
+program_data	logs	top	Windows Update	PLUG/Logs
+program_data	crash_reports	top	priPrinter	priPrinter/dumps
+program_data	logs	tree	Proton VPN	ProtonVPN/Logs
+program_data	logs	top	Pure Networks	Pure Networks/Log
+program_data	cache	top	Intuit Quicken	Quicken/Inet/QWWebData/Cache
+program_data	logs	tree	RegServo	regservo/Logs
+program_data	logs	top	Samsung Bixby	Samsung/Intelligence Voice Service/Logs
+program_data	logs	top	Samsung Find	Samsung/SamsungFind/log
+program_data	logs	top	Samsung Update	Samsung/SamsungUpdate3/log
+program_data	logs	top	Samsung Game Link	SamsungVST/Log
+program_data	logs	top	Immersity	Simulated Reality/Applications/SRSession/Log
+program_data	logs	top	Immersity	Simulated Reality/Eye Tracker/Log
+program_data	logs	top	LeiaSR SDK	Simulated Reality/Server/Log
+program_data	logs	top	Immersity	Simulated RealityServer/Log
+program_data	logs	tree	SiSense	SiSense/Logs
+program_data	logs	top	Download Accelerator Plus	SpeedBit/DAP/Plugins/Log
+program_data	logs	tree	Steed	Steed/Logs
+program_data	logs	tree	Dell SupportAssist	SupportAssist/Client/TechnicianToolkit/Library/Logs
+program_data	logs	top	MirrorFolder	Techsoft/MirrorFolder/Log
+program_data	logs	tree	Topaz Photo AI	Topaz Labs LLC/Topaz Photo AI/Logs
+program_data	cache	top	TrackMania Forever	TrackMania/Cache
+program_data	logs	tree	Trend Micro RUBotted	Trend Micro/RUBotted/Logs
+program_data	logs	top	IBM Security Trusteer Rapport	Trusteer/Rapport/logs
+program_data	logs	tree	Windows Logs	USOShared/Logs
+program_data	logs	top	Vodafone	Vodafone/Log
+program_data	cache	tree	Wowhead Client	wowhead/wowhead client/cache
+program_data	logs	tree	Wowhead Client	wowhead/wowhead client/log
+program_files	logs	tree	Aimersoft DRM Media Converter	Aimersoft/DRM Media Converter/Log
+program_files	logs	top	Aimersoft Video Converter	Aimersoft/Video Converter Ultimate/Log
+program_files	logs	tree	Aimersoft Video Editor	Aimersoft/Video Editor/log
+program_files	logs	top	AirDC++	AirDC++/Logs
+program_files	logs	top	AirDC++	AirDC++/Settings/Logs
+program_files	logs	top	AMD	AMD/RyzenMaster/logs
+program_files	crash_reports	top	Anno 1404	Anno1404/CrashDumps
+program_files	logs	top	AOMEI Backupper	AOMEI Backupper/AOMEI Image Deploy/log
+program_files	logs	top	AOMEI Backupper	AOMEI Backupper/log
+program_files	logs	top	ApexDC++	ApexDC++/Logs
+program_files	logs	top	ApexDC++	ApexDC++/Settings/Logs
+program_files	logs	top	AVG PC TuneUp	AVG/AVG TuneUp/DATA/log
+program_files	logs	top	AVG PC TuneUp	AVG/TuneUp/DATA/log
+program_files	logs	top	Huawei	BILDmobil/Log
+program_files	cache	top	Bluetack Blocklist Manager	Bluetack/Blocklist Manager/Cache
+program_files	logs	top	ByteFence Anti-Malware	ByteFence/Logs
+program_files	logs	top	CCleaner	CCleaner Network/Management Server/Logs
+program_files	logs	top	CCleaner	CCleaner/Data/log
+program_files	logs	top	CCleaner	CCleaner/LOG
+program_files	logs	top	CCTV Security	CCTV Security/Log
+program_files	logs	tree	CFE Exam Prep Course	CFE Exam Prep Course/Log
+program_files	logs	top	Clean Master	Clean Master/log
+program_files	crash_reports	tree	Comodo System Utilities	COMODO/COMODO System Utilities/dumps
+program_files	logs	tree	Comodo System Utilities	COMODO/COMODO System Utilities/logs
+program_files	logs	tree	Comodo GeekBuddy	Comodo/GeekBuddy/logs
+program_files	logs	tree	Driver Fusion	Driver Fusion/Logs
+program_files	logs	top	Driver Cleaner.NET	DriverCleanerDotNET/Log
+program_files	logs	top	DVBDream	dvbdream/Logs
+program_files	logs	top	Star Wars: The Old Republic	EA Games/Star Wars - The Old Republic/logs
+program_files	logs	top	Star Wars: The Old Republic	EA Games/Star Wars - The Old Republic/swtor/retailclient/swtor/logs
+program_files	logs	top	Emsisoft HiJackFree	Emsisoft HiJackFree/Logs
+program_files	logs	top	eMule	eMule/logs
+program_files	logs	top	RegHunter	Enigma Software Group/RegHunter/Log
+program_files	logs	top	SpyHunter	EnigmaSoft/SpyHunter/Logs
+program_files	logs	top	Essential NetTools 3	Essential NetTools/LOGS
+program_files	logs	top	EuroSYSTEMS CoCut Professional 2011	EUROSYSTEMS/CoCut Professional 2011/log
+program_files	logs	top	FINAM Forex Terminal	FINAM Forex Terminal/logs
+program_files	logs	top	FINAM Forex Terminal	FINAM Forex Terminal/tester/logs
+program_files	logs	tree	Find Junk Files	Find Junk Files/System/logs
+program_files	logs	top	Foxit PhantomPDF	Foxit Software/Foxit PhantomPDF/Foxit PDF IFilter/log
+program_files	logs	top	Watto Studios Game Extractor	Game Extractor/logs
+program_files	logs	top	GIGABYTE ControlCenter	GIGABYTE/Control Center/logs
+program_files	logs	top	Unreal Tournament: Game of the Year	GOG.com/Unreal Tournament GOTY/Logs
+program_files	logs	top	Path of Exile	Grinding Gear Games/Path of Exile/Logs
+program_files	logs	top	GS RichCopy 360	GuruSquad/GS RichCopy 360/Log
+program_files	logs	tree	HTC Home Apis	HTC Home/log
+program_files	logs	top	I2P	i2p/eepsite/logs
+program_files	cache	tree	iMyFone Umate	iMyFone/iMyFone Umate/cache
+program_files	logs	tree	iMyFone Umate	iMyFone/iMyFone Umate/Log
+program_files	logs	top	Who's On My WiFi	IO3O LLC/Who Is On My Wifi/logs
+program_files	logs	tree	IObit Malware Fighter	IObit/IObit Malware Fighter/log
+program_files	logs	top	jAnrufmonitor	jAnrufmonitor/logs
+program_files	logs	top	KMS Emulator	KMSpico/Logs
+program_files	logs	top	LibreOffice	LibreOffice/program/logs
+program_files	crash_reports	tree	Logitech Logi Tune	Logitech/LogiTune/data/dumps
+program_files	logs	top	Lost Photos	Lost Photos/Logs
+program_files	logs	tree	Active@ Disk Image	LSoft Technologies/Active@ Disk Image/Logs
+program_files	logs	top	Desktop Central Free Windows Admin Tools	ManageEngine/ManageEngine Free Tools/DesktopCentral Free Windows Admin Tools/logs
+program_files	logs	top	Rise of Nations	Microsoft Games/Rise of Nations/Logs
+program_files	logs	top	Microsoft OneDrive	Microsoft OneDrive/Setup/Logs
+program_files	logs	top	Windows Update	Microsoft Update Health Tools/Logs
+program_files	logs	top	Microsoft Robocopy GUI	Microsoft/Microsoft Robocopy GUI/Logs
+program_files	logs	top	MiniTool ShadowMaker	MiniTool ShadowMaker/log
+program_files	logs	tree	Motherboard Monitor 5	Motherboard Monitor 5/Log
+program_files	logs	tree	Magic: The Gathering Arena	MTG Arena/MTGA_Data/Logs
+program_files	logs	tree	MyLanViewer	MyLanViewer/Logs
+program_files	logs	top	NaturalReader Free 12	Naturalsoft/Free12/log
+program_files	logs	top	Neostar CMS Station Client	Neostar CMS Station/Neostar CMS/Neostar CMS Client/log
+program_files	logs	top	Neostar CMS Station Client	Neostar CMS Station/Neostar CMS/Neostar CMS Client/StreamServer/log
+program_files	logs	top	Norman Security Suite	Norman/Logs
+program_files	logs	top	NVIDIA ForceWare	NVIDIA Corporation/NetworkAccessManager/Apache Group/Apache2/logs
+program_files	logs	tree	LG ODD Auto Firmware Update	ODD Auto Firmware Update/Log
+program_files	logs	top	OpenFire	Openfire/Logs
+program_files	logs	top	SmartDrive-Wiz	Opoku/SmartDrive-Wiz/Log
+program_files	logs	top	PC TechZone Merlin InstantFeedback	PC TechZone/Merlin InstantFeedback/Logs
+program_files	logs	top	PC Doctor	PC-Doctor For Windows/Logs
+program_files	logs	tree	Phyxion.net Driver Sweeper	Phyxion.net/Driver Sweeper/Logs
+program_files	logs	top	Private Internet Access VPN	pia_manager/log
+program_files	logs	top	CCleaner	Piriform/CCleaner 7/data/log
+program_files	logs	top	CCleaner	Piriform/CCleaner 7/log
+program_files	logs	top	Seagate Premium Recovery Suite	Premium Recovery Suite/Logs
+program_files	logs	tree	ProgDVB	ProgDVB/Logs
+program_files	logs	top	RegistryFix	RegistryFix/logs
+program_files	logs	top	RegWork	RegWork/Logs
+program_files	logs	top	Start Menu Reviver	ReviverSoft/Start Menu Reviver/Logs
+program_files	logs	top	iGP11	S17L/iGP11/logs
+program_files	logs	top	Samsung Smart Switch	Samsung/SmartSwitch/log
+program_files	crash_reports	tree	AOL Shield Telemetry	SentryBay/CrashReports
+program_files	logs	top	Serviio	Serviio/log
+program_files	logs	top	Sony Mobile Emma	Sony Mobile/Emma/log
+program_files	crash_reports	tree	Steam	Steam/dumps
+program_files	logs	top	Steam	Steam/logs
+program_files	logs	top	AirBuccaneers	Steam/Steamapps/common/AirBuccaneers/logs
+program_files	cache	tree	Amazing World	Steam/SteamApps/common/Amazing World/Cache
+program_files	logs	top	Antichamber	Steam/SteamApps/common/Antichamber/UDKGame/Logs
+program_files	logs	top	Batman: Arkham Origins	Steam/steamapps/common/Batman Arkham Origins/SinglePlayer/BMGame/Logs
+program_files	cache	top	Crayon Physics Deluxe	Steam/steamapps/common/crayon physics deluxe/cache
+program_files	logs	top	Crypt of the NecroDancer	Steam/steamapps/common/Crypt of the NecroDancer/logs
+program_files	logs	top	A Hat in Time	Steam/steamapps/common/HatinTime/HatinTimeGame/Logs
+program_files	logs	top	Jade Empire	Steam/steamapps/common/Jade Empire/logs
+program_files	logs	top	Mortal Kombat Arcade Kollection	Steam/steamapps/common/Mortal Kombat Arcade Kollection/Engine/EditorResources/FaceFX/Logs
+program_files	logs	top	Mortal Kombat Arcade Kollection	Steam/steamapps/common/Mortal Kombat Arcade Kollection/MKHDGame/Logs
+program_files	cache	tree	Nuclear Dawn Cache	Steam/SteamApps/common/Nuclear Dawn/nucleardawn/cache
+program_files	logs	top	Path of Exile	Steam/steamapps/common/Path of Exile/logs
+program_files	cache	top	Staxel	Steam/Steamapps/common/shared/Staxel/bin/cache
+program_files	logs	top	Sniper: Art of Victory	Steam/SteamApps/Common/Sniper Art of Victory/logs
+program_files	logs	top	Solarix	Steam/SteamApps/common/Solarix/UDKGame/Logs
+program_files	cache	tree	Team Fortress 2	Steam/SteamApps/common/Team Fortress 2/tf/cache
+program_files	logs	top	The Mighty Quest for Epic Loot	Steam/SteamApps/Common/The Mighty Quest For Epic Loot/Log
+program_files	logs	tree	The Talos Principle	Steam/steamapps/common/The Talos Principle/Log
+program_files	logs	top	Titan Quest Anniversary Edition	Steam/SteamApps/Common/Titan Quest Anniversary Edition/logs
+program_files	logs	top	Tribes: Ascend	Steam/steamapps/common/tribes/Binaries/Logs
+program_files	logs	top	Trine	Steam/SteamApps/common/Trine/_enchanted_edition_/log
+program_files	logs	tree	Steam	Steam/vr/runtime/logs
+program_files	logs	tree	AnvSoft Syncios D-Savior	Syncios D-Savior/cache/logs
+program_files	logs	top	TeamSpeak 3	TeamSpeak 3 Client/config/logs
+program_files	logs	top	Timeslips	TimeSlips/Data01/logs
+program_files	logs	top	Timeslips	Timeslips/logs
+program_files	logs	top	Toontown Rewritten	ToonTown ReWritten/logs
+program_files	logs	tree	Tweaking.com Windows Repair	Tweaking.com/Windows Repair (All in One)/Logs
+program_files	logs	top	Ubisoft Connect	Ubisoft/Ubisoft Game Launcher/Logs
+program_files	logs	top	UltraDefrag	UltraDefrag/logs
+program_files	logs	top	Video Thumbnails Maker	Video Thumbnails Maker/Logs
+program_files	cache	tree	Wargaming.net GameCenter	Wargaming.net/GameCenter/Cache
+program_files	logs	top	Wargaming.net GameCenter	Wargaming.net/GameCenter/Logs
+program_files	logs	top	Windows Update	WindowsInstallationAssistant/Logs
+program_files	logs	tree	Windscribe VPN	Windscribe/log
+program_files	logs	tree	Wondershare AllMyTube	Wondershare/AllMyTube/Log
+program_files	logs	tree	Wondershare Dr.Fone	Wondershare/MirrorGo/Log
+program_files	logs	top	Wondershare Repairit	Wondershare/Repairit/log
+program_files	logs	tree	Wondershare Filmora	Wondershare/Wondershare Filmora/log
+program_files	cache	tree	World of Warcraft	World of Warcraft/Cache
+program_files	logs	top	World of Warcraft	World of Warcraft/Logs
+roaming	logs	tree	ClamWin	.clamwin/log
+roaming	logs	tree	Minecraft	.minecraft/logs
+roaming	logs	top	Spoutcraft	.spoutcraft/logs
+roaming	logs	tree	Terasology	.terasology/logs
+roaming	cache	tree	360 Secure Browser Caches	360safe/SoftMgr/Cache
+roaming	cache	tree	360 Secure Browser Caches	360safe/SoftMgr/Message/Cache
+roaming	crash_reports	tree	360 Secure Browser Telemetry	360se6/User Data/Crash Reports
+roaming	logs	top	4Team Updater	4Team/4Team-Updater/Logs
+roaming	logs	top	4Team MOM	4Team/MOM/Logs
+roaming	logs	top	4Team OST2	4Team/Ost2/Logs
+roaming	logs	top	4Team Plug2Sync	4Team/Plug2Sync/Logs
+roaming	logs	top	4Team PSTMerger	4Team/PSTMerger/Logs
+roaming	logs	top	4Team PSTMover	4Team/PSTMover/Logs
+roaming	logs	top	4Team PSTSplitter	4Team/PSTSplitter/Logs
+roaming	logs	top	4Team SafePSTBackup	4Team/SafePSTBackup/Logs
+roaming	logs	top	4Team Sync2	4Team/Sync2/Logs
+roaming	logs	top	4Team SyncWiz	4Team/SyncWiz/Logs
+roaming	logs	top	4Team vCardWizard	4Team/vCardWizard/Logs
+roaming	logs	top	4Team WorkgroupCalendar	4Team/WorkgroupCalendar/Logs
+roaming	logs	tree	Amazon Games	@amzn/aga-electron-platform/Amazon Games UI/logs
+roaming	cache	tree	Ableton Live	Ableton/Cache
+roaming	cache	tree	Acoustica CD Label Maker	Acoustica/CD Label Maker/cache
+roaming	logs	top	Acrok Video Converter Ultimate	Acrok/Acrok Video Converter Ultimate/log
+roaming	logs	tree	Ad-Aware Antivirus	Ad-Aware Antivirus/Logs
+roaming	logs	top	Adobe Camera Raw	Adobe/CameraRaw/Logs
+roaming	logs	top	Adobe After Effects	Adobe/ExtensibilityLibrary/Log
+roaming	logs	tree	Adobe Creative Cloud	Adobe/Extension Manager CC/Log
+roaming	logs	tree	Adobe Creative Cloud	Adobe/LogTransport2/Logs
+roaming	logs	tree	Adobe Creative Cloud	Adobe/LogTransport2CC/Logs
+roaming	logs	top	Adobe Premiere Pro	Adobe/Premiere Pro/Logs
+roaming	crash_reports	tree	Adobe Photoshop	Adobe/UXP/PluginsStorage/PHSP/26/Shared/EBWebView/Crash Reports
+roaming	cache	tree	Adobe Photoshop	Adobe/UXP/PluginsStorage/PHSP/26/Shared/EBWebView/Default/Shared Dictionary/cache
+roaming	crash_reports	tree	Aegisub	Aegisub/crashdumps
+roaming	logs	tree	Aegisub	Aegisub/log
+roaming	logs	top	Aignes Website-Watcher	aignes/WebSite-Watcher/config/log
+roaming	logs	top	AirDC++	AirDC++/Logs
+roaming	logs	tree	AnvSoft PDFMate	AnvsoftPdfTools/tmp/log
+roaming	logs	tree	AnvSoft Any Video Converter	Any Video Converter/logs
+roaming	logs	top	ApexDC++	ApexDC++/Logs
+roaming	logs	top	Apowersoft ApowerCompress	Apowersoft/ApowerCompress/log
+roaming	logs	top	Apowersoft ApowerManager	Apowersoft/ApowerManager/log
+roaming	logs	top	Apowersoft ApowerMirror	Apowersoft/ApowerMirror/log
+roaming	logs	top	Apowersoft ApowerREC	Apowersoft/ApowerREC/log
+roaming	logs	top	Apowersoft ApowerRecover	Apowersoft/ApowerRecover/log
+roaming	logs	top	Apowersoft ApowerRescue	Apowersoft/ApowerRescue/log
+roaming	logs	top	Apowersoft Background Easer	Apowersoft/Apowersoft background eraser/log
+roaming	logs	top	Apowersoft CAD Viewer	Apowersoft/Apowersoft CAD Viewer/log
+roaming	logs	top	Apowersoft GIF	Apowersoft/Apowersoft GIF/Log
+roaming	logs	top	Apowersoft HEIC Converter	Apowersoft/Apowersoft Heic Converter/Log
+roaming	logs	top	Apowersoft Photo Viewer	Apowersoft/Apowersoft Photo Viewer/Log
+roaming	logs	top	Apowersoft Screen Capture Pro	Apowersoft/Apowersoft Screen Capture Pro/Log
+roaming	logs	top	Apowersoft Video Editor	Apowersoft/Apowersoft Video Editor/Log
+roaming	logs	top	Apowersoft Casttingo	Apowersoft/Casttingo/log
+roaming	logs	top	Apowersoft Casttingo	Apowersoft/chromatool/log
+roaming	cache	top	Apowersoft GitMind	Apowersoft/GitMind/Cache
+roaming	logs	top	Apowersoft GitMind	Apowersoft/GitMind/logs
+roaming	crash_reports	tree	Apowersoft GitMind	Apowersoft/GitMind/webview/EBWebView/Crash Reports
+roaming	cache	tree	Apowersoft GitMind	Apowersoft/GitMind/webview/EBWebView/Default/Shared Dictionary/cache
+roaming	logs	top	Apowersoft RecCloud	Apowersoft/RecCloud/log
+roaming	logs	top	Apowersoft Streaming Audio Recorder	Apowersoft/Streaming Audio Recorder/log
+roaming	logs	top	Apowersoft RecCloud	Apowersoft/Video Editor Pro/log
+roaming	crash_reports	tree	ArtisBrowser Telemetry	ArtistScope/ArtisBrowser/Crash Reports
+roaming	logs	top	Ashampoo SoundStage	Ashampoo Soundstage/logs
+roaming	cache	tree	Observer	Aspyr Media/Game Guide 3/Cache
+roaming	cache	tree	Layers of Fear	Aspyr Media/GameGuide/Cache
+roaming	logs	top	Auslogics Registry Defrag	Auslogics/Registry Defrag/Logs
+roaming	logs	top	Autodesk Installer	Autodesk Installer/Logs
+roaming	logs	tree	Avast	AVAST Software/Avast/log
+roaming	cache	tree	Avast Cleanup	Avast Software/Cleanup/Cache
+roaming	logs	tree	Avast Cleanup	Avast Software/Cleanup/log
+roaming	logs	top	AnvSoft AVCLabs Photo Enhancer AI	AVCLabs Photo Enhancer AI/logs
+roaming	logs	top	AnvSoft AVCLabs PhotoPro AI	AVCLabs PhotoPro AI/logs
+roaming	logs	top	AnvSoft AVCLabs Video Blur AI	AVCLabs Video Blur AI/logs
+roaming	logs	top	AnvSoft AVCLabs Video Enhancer AI	AVCLabs Video Enhancer AI/logs
+roaming	cache	tree	AVG PC TuneUp	AVG TuneUp/Cache
+roaming	logs	top	AVG PC TuneUp	AVG TuneUp/log
+roaming	logs	tree	AVG AntiVirus	AVG/Antivirus/log
+roaming	logs	top	AVG PC TuneUp	AVG/AVG TuneUp/log
+roaming	logs	top	AVG PC TuneUp	AVG/TuneUp/log
+roaming	crash_reports	tree	Basilisk Telemetry	Basilisk-Dev/Basilisk/Crash Reports
+roaming	cache	top	Bulk Image Downloader	BID/cef/cache
+roaming	logs	top	BiglyBT	BiglyBT/logs
+roaming	logs	top	Bitwarden	Bitwarden/Bitwarden/Logs
+roaming	logs	top	Bitwarden	Bitwarden/Logs
+roaming	logs	tree	Blackmagic Design DaVinci Resolve	Blackmagic Design/DaVinci Resolve/Support/logs
+roaming	cache	tree	Toshiba Book Place	Book Place/Cache
+roaming	logs	tree	Toshiba Book Place	Book Place/log
+roaming	cache	top	BSPlayer	BSplayer/cache
+roaming	cache	tree	Canon Digital Photo Professional 4	Canon_Inc_IC/DPP4/DppMWare/Cache
+roaming	logs	top	Caprine	Caprine/Caprine/logs
+roaming	logs	top	Caprine	Caprine/logs
+roaming	logs	top	CareUEyes	careueyes/log
+roaming	crash_reports	top	CCleaner	CCleaner/Dumps
+roaming	logs	top	CCleaner	CCleaner/Logs
+roaming	logs	top	Chocolatey	ChocolateyGUI/Logs
+roaming	cache	tree	Citrix Receiver	Citrix/ICA Client/Cache
+roaming	logs	tree	Sandisk Installer	com.sandisk.softwareInstaller/Logs
+roaming	logs	top	Comodo	Comodo/CCE/Logs
+roaming	cache	top	Comodo	ComodoGroup/CSC/Cache
+roaming	cache	tree	Corel PaintShop Pro	Corel/PaintShop Photo Pro/13/Cache
+roaming	logs	top	Cricut Design Space	Cricut Design Space/Native/Logs
+roaming	logs	top	CurseForge	CurseForge/Logs
+roaming	logs	top	Cycling '74	Cycling '74/Logs
+roaming	logs	top	PotPlayer	Daum/PotPlayer/Log
+roaming	logs	top	DC++	DC++/Logs
+roaming	logs	top	DeviceDoctor	DeviceDoctorSoftware/DeviceDoctor/Logs
+roaming	logs	top	DivX	DivX/DMS/logs
+roaming	logs	tree	Dropbox	Dropbox/logs
+roaming	logs	tree	Dropbox	DropBoxOem/Log
+roaming	logs	top	DriverPack Solution	DRPSu/Logs
+roaming	logs	top	Javelin PDF Reader	DrumlinSecurity/JavelinNew/logs
+roaming	logs	top	DS4Windows	DS4Windows/Logs
+roaming	logs	tree	Amazon Games	electron-platform/Amazon Games UI/logs
+roaming	logs	top	eM Client	eM Client/Logs
+roaming	logs	top	Passware Encryption Analyzer	EncryptionAnalyzer/logs
+roaming	logs	top	Etwok NetSpot	Etwok/NetSpot Installer/Logs
+roaming	logs	top	Etwok NetSpot	Etwok/NetSpot/Logs
+roaming	crash_reports	tree	Sleipnir Telemetry	Fenrir Inc/Sleipnir5/setting/modules/ChromiumViewer/Crash Reports
+roaming	logs	top	FFsplit	FFsplit/logs
+roaming	logs	top	Telerik Fiddler Everywhere	Fiddler Everywhere/Logs
+roaming	logs	top	Infonautics File Date Corrector	FileDateCorrector/Logs
+roaming	cache	top	Dell Stage Suite	Fingertapps/AccuWeather/Cache
+roaming	logs	top	iXL	Fisher-Price/iXL/Log
+roaming	logs	top	FixCleaner	FixCleaner/Logs
+roaming	crash_reports	tree	Floorp Telemetry	Floorp/Crash Reports
+roaming	cache	tree	Foobar2000	foobar2000/foo_youtube/cache
+roaming	logs	top	Ford Sync My iTunes	Ford Motor Company/logs
+roaming	cache	tree	ForgetBox	ForgetBox/cache
+roaming	cache	tree	Foxit PDF Editor	Foxit Software/Foxit PDF Editor/Cache
+roaming	logs	top	FreeFileSync	FreeFileSync/Logs
+roaming	crash_reports	tree	GG	GG/Crash Reports
+roaming	logs	top	GG	GG/logs
+roaming	logs	top	Directory Opus	GPSoftware/Directory Opus/Logs
+roaming	crash_reports	tree	Grammarly	Grammarly/DesktopIntegrations/WebViewUserDataFolder/EBWebView/Crash Reports
+roaming	cache	tree	Grammarly	Grammarly/DesktopIntegrations/WebViewUserDataFolder/EBWebView/Default/Shared Dictionary/cache
+roaming	logs	top	Halls of Torment	HallsOfTorment/logs
+roaming	logs	tree	HandBrake	HandBrake/logs
+roaming	logs	top	Heroic Games Launcher	Heroic/logs
+roaming	logs	tree	HexChat	HexChat/logs
+roaming	logs	top	Hide.me VPN	Hide.me/Logs
+roaming	logs	top	Humble App	Humble App/Logs
+roaming	logs	top	I2P	I2P/eepsite/logs
+roaming	cache	tree	Citrix Receiver	ICAClient/Cache
+roaming	logs	tree	UltraCompare	IDMComp/Common/Logs
+roaming	logs	top	Imo Messenger	Imo Messenger/Logs
+roaming	cache	tree	IMVU	IMVUClient/ui/profile/cache
+roaming	logs	top	eSignaDesktop	Indenova/eSigna Desktop/log
+roaming	logs	top	InfraRecorder	InfraRecorder/logs
+roaming	crash_reports	top	Intel Wireless Wi-Fi Drivers	Intel/Wireless/CrashDumps
+roaming	logs	top	Intuit Proline Tax Import	Intuit/PTI/Log
+roaming	logs	tree	IObit Driver Booster	IObit/Driver Booster/Logs
+roaming	logs	tree	System Mechanic	ioloGovernor/logs
+roaming	logs	top	IP Hider Pro	IP Hider Pro/Logs
+roaming	logs	top	WS FTP Pro	Ipswitch/WS_FTP/Logs
+roaming	logs	top	iTop Screen Recorder	iTop Screen Recorder/Logs
+roaming	logs	tree	Jitsi	Jitsi/Log
+roaming	cache	top	Leawo Blu-ray Ripper	Leawo/Blu-ray Ripper/Download/WebCache
+roaming	logs	top	Leawo Blu-ray Ripper	Leawo/Blu-ray Ripper/Log
+roaming	cache	tree	Leawo Prof. Media	Leawo/Prof. Media/Burn/MenuTemplate/Cache
+roaming	cache	tree	Leawo Prof. Media	Leawo/Prof. Media/Download/WebCache
+roaming	logs	tree	Leawo Prof. Media	Leawo/Prof. Media/Log
+roaming	logs	top	Legacy Games Launcher	legacy-games-launcher/logs
+roaming	crash_reports	tree	LibreWolf Telemetry	librewolf/Crash Reports
+roaming	crash_reports	tree	Logitech Logi Tune	logitune/dumps
+roaming	cache	tree	Lyx	LyX2.0/Cache
+roaming	logs	top	ManyCam	ManyCam/Logs
+roaming	logs	top	Memeo	Memeo/AutoBackup/Logs
+roaming	logs	top	Memeo	Memeo/Memeo Send/Logs
+roaming	crash_reports	tree	Mercury Telemetry	mercury/Crash Reports
+roaming	logs	top	Rise of Nations	Microsoft Games/Rise of Nations/Logs
+roaming	logs	top	Microsoft Robocopy GUI	Microsoft Robocopy GUI/Logs
+roaming	logs	top	Microsoft Teams	Microsoft Teams/Logs
+roaming	logs	top	Rise Of Legends	Microsoft/Rise Of Legends/Logs
+roaming	crash_reports	tree	Microsoft Teams	Microsoft/Teams/Crash Reports
+roaming	cache	tree	Microsoft Teams	Microsoft/Teams/Default/Shared Dictionary/cache
+roaming	crash_reports	tree	Midori Telemetry	Midori/Crash Reports
+roaming	crash_reports	tree	Pale Moon Telemetry	Moonchild Productions/Pale Moon/Crash Reports
+roaming	logs	tree	MoreTerra	MoreTerra/Logs
+roaming	cache	top	Cook'n	Mozilla/eclipse/Cache
+roaming	crash_reports	tree	Mozilla Firefox Telemetry	Mozilla/Firefox/Crash Reports
+roaming	crash_reports	tree	IceCat Telemetry	Mozilla/icecat/Crash Reports
+roaming	crash_reports	tree	SeaMonkey Telemetry	Mozilla/SeaMonkey/Crash Reports
+roaming	logs	top	MPK mini Software Manager	MPK-mini-Software-Manager/Logs
+roaming	logs	top	MPK mini Software Manager	MPK-mini-Software-Manager/MPK mini Software Manager/Logs
+roaming	crash_reports	tree	Mullvad Telemetry	Mullvad/MullvadBrowser/Crash Reports
+roaming	cache	tree	Civilization	My Games/Civilizaton 4/Cache
+roaming	logs	top	MyNextbase Player	MyNextbase Player/Logs
+roaming	crash_reports	tree	Mypal Telemetry	Mypal68/Crash Reports
+roaming	cache	top	MySQL Workbench	MySQL/Workbench/cache
+roaming	cache	tree	Natural Selection 2	Natural Selection 2/cache
+roaming	logs	top	NCH Software Express Zip	NCH Software/ExpressZip/Logs
+roaming	logs	top	NCH Software Golden Records	NCH Software/Golden/Logs
+roaming	logs	top	NCH Software Scribe	NCH Software/Scribe/Logs
+roaming	logs	top	NCH Software SoundTap Streaming Audio Recorder	NCH Software/SoundTap/Logs
+roaming	logs	tree	NCH Software Switch Audio-Converter	NCH Software/Switch/Logs
+roaming	logs	top	NCH Software WavePad Sound Editor	NCH Software/WavePad/Logs
+roaming	logs	top	NCSOFT Game Launcher	NCSoft/ncDownloader/config/Log
+roaming	logs	top	Nero	Nero/Nero ControlCenter/Logs
+roaming	logs	tree	Nero	Nero/Nero Start/Logs
+roaming	logs	top	Nextcloud	Nextcloud/Logs
+roaming	logs	tree	Nicotine+	nicotine/logs
+roaming	logs	top	Norton	Norton/logs
+roaming	logs	top	Notion	Notion/logs
+roaming	logs	top	Oculus	Oculus/Logs
+roaming	logs	top	One More Multiverse	OneMoreMultiverse/logs
+roaming	logs	top	One More Multiverse	OneMoreMultiverse/One More Multiverse/logs
+roaming	logs	top	Outer Wilds Mod Manager	OuterWildsModManager/OWML/Logs
+roaming	logs	tree	Outer Wilds Mod Manager	ow-mods/ow-mod-man/data/logs
+roaming	cache	top	Paradox Interactive Launcher	Paradox Interactive/launcher-v2/cache
+roaming	logs	top	Paradox Interactive Launcher	Paradox Launcher/Logs
+roaming	logs	top	Magicka 2	ParadoxInteractive/Magicka2/logs
+roaming	logs	top	Passware Encryption Analyzer	PasswareEncryptionAnalyzer/logs
+roaming	logs	top	Pi Network	Pi Network/Logs
+roaming	logs	top	Pi Network	Pi Network/Pi Network/Logs
+roaming	logs	top	Snapfish Picture Mover	PictureMover/Log
+roaming	logs	top	Pipy	Pipy/Logs
+roaming	logs	top	PixelFlasher	PixelFlasher/logs
+roaming	crash_reports	tree	PostBox	PostBox/Crash Reports
+roaming	logs	top	PowerENGAGE	PowerENGAGE/Logs
+roaming	cache	tree	Process Hacker	Process Hacker/Cache
+roaming	cache	tree	RadeonPro	RadeonPro/Cache
+roaming	logs	top	Registry Finder	RegistryFinder/UnsentCrashReports/Logs
+roaming	logs	top	Renault Media Nav Evolution Toolbox	RenaultAutomotive/log
+roaming	logs	tree	Roccat Swarm	ROCCAT/SWARM/log
+roaming	logs	top	ROLI Connect	ROLI Connect/Logs
+roaming	logs	top	Samsung Smart Switch	Samsung/SmartSwitchPCtoPC/logs
+roaming	logs	top	ScummVM	ScummVM/Logs
+roaming	cache	tree	SecondLife	SecondLife/cache
+roaming	logs	top	SecondLife	SecondLife/Logs
+roaming	logs	top	Success Story	Shape Games/SuccessStory/logs
+roaming	logs	top	Signal Messenger	Signal/Logs
+roaming	logs	tree	Similarity	Similarity/logs
+roaming	logs	top	SiSense	SiSense/Prism/logs
+roaming	logs	tree	Slack	Slack/logs
+roaming	logs	top	Logitech Streamlabs Desktop	slobs-client/node-obs/logs
+roaming	logs	top	Document Trace Remover	Smart PC Solutions/Smart Fast PC/Log
+roaming	logs	tree	SmartFTP	SmartFTP/Client 2.0/Log
+roaming	logs	tree	PCWinBooster	Soft4Boost/Logs
+roaming	logs	top	Softube Central	SoftubeCentral/Softube Central/Logs
+roaming	logs	tree	SongKong	SongKong/Logs
+roaming	cache	top	Sonic Visualiser	sonic-visualiser/Sonic Visualiser/cache
+roaming	logs	top	Sonic Visualiser	sonic-visualiser/Sonic Visualiser/log
+roaming	logs	tree	SpeedyComputer	SpeedyComputer/Log
+roaming	cache	tree	Polarity	Stanley Lim/Polarity/Cache
+roaming	logs	tree	Steam	SteamVR/Logs
+roaming	logs	top	SuperSync	SuperSync/logs
+roaming	logs	top	SuuntoLink	SuuntoLink/Logs
+roaming	logs	top	AnvSoft Syncios Data Recovery	Syncios Data Recovery/logs
+roaming	logs	top	AnvSoft Syncios iOS Eraser Pro	Syncios iOS Eraser Pro/logs
+roaming	logs	top	AnvSoft Syncios Location Changer	Syncios Location Changer/logs
+roaming	logs	top	AnvSoft Syncios Mobile Manager	Syncios Mobile Manager/logs
+roaming	logs	top	AnvSoft Syncios Passcode Unlocker	Syncios Passcode Unlocker/logs
+roaming	logs	top	AnvSoft Syncios Toolkit	Syncios Toolkit/logs
+roaming	logs	top	AnvSoft Syncios WhatsApp Transfer	Syncios WhatsApp Transfer/logs
+roaming	logs	top	AnvSoft Syncios YouTube Video Downloader	Syncios YouTube Video Downloader/logs
+roaming	logs	tree	SyncTrayzor	SyncTrayzor/logs
+roaming	logs	top	TeamLink	TeamLink/Logs
+roaming	logs	tree	Camtasia	TechSmith/CamtasiaStudio/Logs
+roaming	crash_reports	tree	Teeworlds	Teeworlds/dumps
+roaming	logs	tree	QQBrowser Telemetry	Tencent/Logs
+roaming	logs	tree	Tencent WeChat	Tencent/WeChat/Log
+roaming	logs	tree	Tencent WeChat Work	Tencent/WXWork/Log
+roaming	cache	top	The Bat	The Bat!/cache
+roaming	logs	top	Attila	The Creative Assembly/Attila/Logs
+roaming	cache	top	The Creative Assembly Launcher	The Creative Assembly/Launcher/electron/Cache
+roaming	logs	top	The Creative Assembly Launcher	The Creative Assembly/Launcher/Logs
+roaming	logs	top	Napoleon	The Creative Assembly/Napoleon/Logs
+roaming	logs	top	Shogun2	The Creative Assembly/Shogun2/Logs
+roaming	crash_reports	tree	Thunderbird Telemetry	Thunderbird/Crash Reports
+roaming	crash_reports	tree	TIDAL	TIDAL/CrashDumps
+roaming	logs	tree	TIDAL	TIDAL/Logs
+roaming	cache	tree	TimeRabbit	TimeRabbit/Cache
+roaming	logs	tree	Topaz Video AI	Topaz Labs LLC/Topaz Video AI/logs
+roaming	logs	top	SketchUp Make	Trimble Connect for Sketchup/Logs
+roaming	logs	top	IBM Security Trusteer Rapport	Trusteer/Rapport/user/Logs
+roaming	logs	top	TuneIn Radio	TuneIn/Logs
+roaming	crash_reports	top	AVG PC TuneUp	TuneUp Software/TuneUp Utilities/CrashDumps
+roaming	logs	top	TunnelBear VPN	TunnelBear/Logs
+roaming	crash_reports	tree	Twitch	Twitch/Games/Dumps
+roaming	cache	tree	ANNO 2070	Ubisoft/ANNO 2070/Cache
+roaming	logs	top	Unified Remote	Unified Remote/Logs
+roaming	crash_reports	tree	uTorrent Web	uTorrent Web/crashdumps
+roaming	logs	tree	Win Movie Maker	VideoWinSoft/logs
+roaming	crash_reports	tree	Waterfox Telemetry	Waterfox/Crash Reports
+roaming	cache	tree	Waves Audio	Waves Audio/Caches
+roaming	logs	tree	Waves Audio	Waves Audio/Waves Central/logs
+roaming	logs	top	Western Digital SmartWare	Western Digital/WD SmartWare/Logs
+roaming	logs	top	WhatsApp	WhatsApp/Logs
+roaming	logs	top	WildTangent	WildTangent/Logs
+roaming	logs	top	Solvusoft WinThruster	WinThruster/Log
+roaming	logs	tree	Wondershare MobileGo	Wondershare/WsRoot/Logs
+roaming	cache	top	Xiaomi	Xiaomi/miphonemanager/cache
+roaming	crash_reports	tree	Zen Telemetry	Zen/Crash Reports
+roaming	logs	tree	Zoom	Zoom/Logs
+windows	logs	tree	Intel	debug/Intel/Logs
+windows	logs	tree	Windows Logs	security/logs
+windows	crash_reports	top	Windows Error Reporting	ServiceProfiles/NetworkService/AppData/Local/CrashDumps
+windows	cache	tree	Windows Update	ServiceProfiles/NetworkService/AppData/Local/Microsoft/Windows/DeliveryOptimization/Cache
+windows	logs	tree	Windows Event Logs	ServiceProfiles/NetworkService/AppData/Local/Microsoft/Windows/DeliveryOptimization/Logs
+windows	logs	tree	Windows Update	SoftwareDistribution/DataStore/Logs
+windows	logs	top	Adobe Air	System32/config/systemprofile/AppData/Local/Adobe/AIR/logs
+windows	logs	tree	AVG	System32/config/systemprofile/AppData/Local/Avg/log
+windows	cache	tree	GNU	System32/config/systemprofile/AppData/Local/Gnu/Cache
+windows	logs	top	Google Quick Share	System32/config/systemprofile/AppData/Local/Google/Nearby/Sharing/Logs
+windows	logs	tree	AVG AntiVirus	System32/config/systemprofile/AppData/Local/MFAData/logs
+windows	logs	tree	Microsoft OneDrive	System32/config/systemprofile/AppData/Local/Microsoft/OneDrive/Logs
+windows	logs	tree	Microsoft OneDrive	System32/config/systemprofile/AppData/Local/Microsoft/OneDrive/Setup/Logs
+windows	logs	tree	Plex Media Server	System32/config/systemprofile/AppData/Local/Plex Media Server/Logs
+windows	logs	top	IBM Security Trusteer Rapport	System32/config/systemprofile/AppData/Local/Trusteer/Rapport/user/logs
+windows	logs	tree	Apple iTunes	System32/config/systemprofile/AppData/Roaming/Apple Computer/Logs
+windows	logs	tree	Intel	System32/config/systemprofile/Intel/Logs
+windows	cache	tree	GNU	System32/config/systemprofile/local settings/application data/gnu/cache
+windows	logs	top	Windows Event Logs	System32/winevt/logs
+windows	logs	top	Adobe Air	SysWOW64/config/systemprofile/AppData/Local/Adobe/AIR/logs
+windows	logs	tree	AVG	SysWOW64/config/systemprofile/AppData/Local/Avg/log
+windows	cache	tree	GNU	SysWOW64/config/systemprofile/AppData/Local/GNU/Cache
+windows	logs	tree	AVG AntiVirus	SysWOW64/config/systemprofile/AppData/Local/MFAData/logs
+windows	logs	tree	Microsoft OneDrive	SysWOW64/config/systemprofile/AppData/Local/Microsoft/OneDrive/Logs
+windows	logs	tree	Microsoft OneDrive	SysWOW64/config/systemprofile/AppData/Local/Microsoft/OneDrive/Setup/Logs
+windows	logs	tree	Plex Media Server	SysWOW64/config/systemprofile/AppData/Local/Plex Media Server/Logs
+windows	logs	tree	Apple iTunes	SysWOW64/config/systemprofile/AppData/Roaming/Apple Computer/Logs
+windows	logs	tree	Intel	SysWOW64/config/systemprofile/Intel/Logs

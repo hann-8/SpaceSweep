@@ -4,10 +4,12 @@ use std::io;
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Component, Path, PathBuf};
-use std::ptr::null_mut;
+use std::ptr::{null, null_mut};
 
 use serde::{Deserialize, Serialize};
-use windows_sys::Win32::Foundation::{ERROR_NO_MORE_FILES, HANDLE, INVALID_HANDLE_VALUE};
+use windows_sys::Win32::Foundation::{
+    ERROR_NO_MORE_FILES, ERROR_SUCCESS, HANDLE, INVALID_HANDLE_VALUE,
+};
 use windows_sys::Win32::Globalization::CompareStringOrdinal;
 use windows_sys::Win32::Storage::FileSystem::{
     FindFirstVolumeW, FindNextVolumeW, FindVolumeClose, GetDiskFreeSpaceExW, GetDriveTypeW,
@@ -18,10 +20,14 @@ use windows_sys::Win32::System::Com::CoTaskMemFree;
 use windows_sys::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
 };
+use windows_sys::Win32::System::Registry::{
+    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_32KEY, KEY_WOW64_64KEY,
+    RRF_RT_REG_EXPAND_SZ, RRF_RT_REG_SZ, RegCloseKey, RegEnumKeyExW, RegGetValueW, RegOpenKeyExW,
+};
 use windows_sys::Win32::UI::Shell::{
-    FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_ProgramFiles,
-    FOLDERID_ProgramFilesX86, FOLDERID_RoamingAppData, SHGetKnownFolderPath, SHQUERYRBINFO,
-    SHQueryRecycleBinW,
+    FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_ProgramData,
+    FOLDERID_ProgramFiles, FOLDERID_ProgramFilesX86, FOLDERID_RoamingAppData, FOLDERID_Windows,
+    SHGetKnownFolderPath, SHQUERYRBINFO, SHQueryRecycleBinW,
 };
 
 pub const DIRECTORY: u32 = 0x10;
@@ -301,6 +307,71 @@ pub fn installed_chrome_majors() -> Vec<u32> {
     .collect()
 }
 
+struct RegistryKey(HKEY);
+
+impl Drop for RegistryKey {
+    fn drop(&mut self) {
+        unsafe { RegCloseKey(self.0) };
+    }
+}
+
+pub fn installed_app_locations() -> io::Result<Vec<PathBuf>> {
+    let uninstall = wide(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")?;
+    let value_name = wide("InstallLocation")?;
+    let mut buffer = vec![0_u16; 32768];
+    let mut locations = Vec::new();
+    for hive in [HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
+        for view in [KEY_WOW64_64KEY, KEY_WOW64_32KEY] {
+            let mut handle = null_mut();
+            let status =
+                unsafe { RegOpenKeyExW(hive, uninstall.as_ptr(), 0, KEY_READ | view, &mut handle) };
+            if status != ERROR_SUCCESS {
+                continue;
+            }
+            let key = RegistryKey(handle);
+            for index in 0.. {
+                let mut name = [0_u16; 256];
+                let mut length = name.len() as u32;
+                let status = unsafe {
+                    RegEnumKeyExW(
+                        key.0,
+                        index,
+                        name.as_mut_ptr(),
+                        &mut length,
+                        null(),
+                        null_mut(),
+                        null_mut(),
+                        null_mut(),
+                    )
+                };
+                if status != ERROR_SUCCESS {
+                    break;
+                }
+                let mut bytes = (buffer.len() * size_of::<u16>()) as u32;
+                let status = unsafe {
+                    RegGetValueW(
+                        key.0,
+                        name.as_ptr(),
+                        value_name.as_ptr(),
+                        RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ,
+                        null_mut(),
+                        buffer.as_mut_ptr().cast(),
+                        &mut bytes,
+                    )
+                };
+                if status == ERROR_SUCCESS {
+                    let location = text(&buffer[..bytes as usize / size_of::<u16>()]);
+                    let path = PathBuf::from(location.trim().trim_matches('"'));
+                    if path.is_absolute() {
+                        locations.push(path);
+                    }
+                }
+            }
+        }
+    }
+    Ok(locations)
+}
+
 fn mounts(volume: &[u16]) -> io::Result<Vec<PathBuf>> {
     let mut buffer = vec![0u16; 256];
     loop {
@@ -407,6 +478,8 @@ pub enum Folder {
     Downloads,
     ProgramFiles,
     ProgramFilesX86,
+    ProgramData,
+    Windows,
     VolumeRoot,
 }
 
@@ -419,6 +492,8 @@ impl Folder {
             Self::Downloads => &FOLDERID_Downloads,
             Self::ProgramFiles => &FOLDERID_ProgramFiles,
             Self::ProgramFilesX86 => &FOLDERID_ProgramFilesX86,
+            Self::ProgramData => &FOLDERID_ProgramData,
+            Self::Windows => &FOLDERID_Windows,
             Self::VolumeRoot => {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidInput,

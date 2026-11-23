@@ -22,6 +22,9 @@ pub enum Kind {
     FirefoxCache,
     NpmCache,
     PipCache,
+    ApplicationCacheClue,
+    ApplicationLogClue,
+    ApplicationCrashClue,
     OldTemp,
     TempInstaller,
     DownloadInstaller,
@@ -43,6 +46,9 @@ impl Kind {
             Self::TempInstaller
             | Self::DownloadInstaller
             | Self::ArchiveWithDirectory
+            | Self::ApplicationCacheClue
+            | Self::ApplicationLogClue
+            | Self::ApplicationCrashClue
             | Self::DumpClue => ReviewLevel::Suspected,
             _ => ReviewLevel::NeedsReview,
         }
@@ -65,7 +71,7 @@ impl Kind {
             ),
             Self::BrowserCache => (
                 "网页磁盘缓存",
-                "Chromium 浏览器和桌面应用使用的 Cache/Cache_Data，资源可按需重新下载。",
+                "具备 Chromium 磁盘缓存的索引与数据布局，供浏览器和桌面应用复用网页资源。",
             ),
             Self::BrowserCodeCache => (
                 "网页代码缓存",
@@ -86,6 +92,18 @@ impl Kind {
             Self::PipCache => (
                 "pip 下载和构建缓存",
                 "pip 默认缓存位置中的 HTTP 响应或 wheel 缓存，安装时可重新获取或构建。",
+            ),
+            Self::ApplicationCacheClue => (
+                "应用缓存",
+                "匹配 Winapp2 的应用缓存路径。可按应用核对内容用途、重建和离线使用影响。",
+            ),
+            Self::ApplicationLogClue => (
+                "应用日志",
+                "匹配 Winapp2 的日志路径。可按应用核对是否仍需保留诊断或记录。",
+            ),
+            Self::ApplicationCrashClue => (
+                "应用崩溃记录",
+                "匹配 Winapp2 的崩溃记录路径。可按应用核对是否还用于定位故障。",
             ),
             Self::OldTemp => (
                 "长期未改动的 .tmp",
@@ -262,24 +280,32 @@ fn chromium_index(root: &Path) -> bool {
 pub fn cache_layout(directory: &Location) -> Option<Kind> {
     let relative = &directory.relative;
     match relative.file_name()?.to_str()? {
-        "Cache_Data" if relative.parent()?.file_name()? == "Cache" => {
+        name if name.eq_ignore_ascii_case("Cache_Data")
+            && relative
+                .parent()?
+                .file_name()?
+                .eq_ignore_ascii_case("Cache") =>
+        {
             chromium_index(&directory.native()).then_some(Kind::BrowserCache)
         }
-        "Code Cache" => {
+        name if name.eq_ignore_ascii_case("Cache") => {
+            chromium_index(&directory.native()).then_some(Kind::BrowserCache)
+        }
+        name if name.eq_ignore_ascii_case("Code Cache") => {
             let root = directory.native();
             ["js", "wasm"]
                 .into_iter()
                 .any(|part| layout_marker(&root, part, true) && chromium_index(&root.join(part)))
                 .then_some(Kind::BrowserCodeCache)
         }
-        "cache2" => {
+        name if name.eq_ignore_ascii_case("cache2") => {
             let root = directory.native();
             (layout_marker(&root, "entries", true)
                 && (layout_marker(&root, "index", false)
                     || layout_marker(&root, "index.log", false)))
             .then_some(Kind::FirefoxCache)
         }
-        "_cacache" => {
+        name if name.eq_ignore_ascii_case("_cacache") => {
             let root = directory.native();
             (layout_marker(&root, "content-v2", true) && layout_marker(&root, "index-v5", true))
                 .then_some(Kind::NpmCache)

@@ -218,7 +218,7 @@ function Get-CoverageLabel($Volume) {
     }
     if ($areasOnVolume.Count) { return '已分析选定目录' }
     if ($scan.mode -eq 'directory_analysis' -and $scan.stop_reason) { return '目录分析未开始' }
-    '快查 · 已知位置'
+    '快查 · 系统与应用位置'
 }
 
 Add-Section @'
@@ -479,7 +479,7 @@ foreach ($item in $areas) {
     Add-Section '</details>'
 }
 if (!$areas.Count) {
-    Add-Section '<p>这轮只检查了已知位置。目录分析结果可以附在这份报告里。</p>'
+    Add-Section '<p>本轮为快查，具体覆盖见「垃圾快查范围」。逐目录占用排行随深查结果显示。</p>'
 }
 Add-Section '</section>'
 

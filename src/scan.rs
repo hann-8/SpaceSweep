@@ -14,6 +14,8 @@ use crate::discovery::{self, Finding, Groups, Kind, ReviewLevel};
 use crate::rules::{self, Action, Rule};
 use crate::windows::{self, Folder, Location, Stamp, Volume};
 
+mod applications;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StopReason {
@@ -461,6 +463,13 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 &temp_candidates,
                 &result.rules,
             );
+            applications::discover(
+                discovery,
+                &result.volumes,
+                &control,
+                options.progress,
+                &mut covered,
+            )?;
             discovery.quick_elapsed_ms = Some(started.elapsed().as_millis() as u64);
         }
     }
@@ -765,6 +774,7 @@ fn analyze(
                         | Kind::BrowserCodeCache
                         | Kind::FirefoxCache
                         | Kind::NpmCache
+                        | Kind::ApplicationCacheClue
                 )
             })
             .filter_map(|finding| windows::locate(&finding.path, volumes))
@@ -783,7 +793,8 @@ fn analyze(
                 && let Some(kind) = discovery::clue(file, stamp, *now, false)
                 && !file.relative.starts_with("$Recycle.Bin")
                 && !covered.iter().any(|area| {
-                    area.volume == file.volume && file.relative.starts_with(&area.relative)
+                    area.volume == file.volume
+                        && windows::relative_to(&file.relative, &area.relative).is_some()
                 })
                 && let Some(parent) = file.relative.parent()
             {

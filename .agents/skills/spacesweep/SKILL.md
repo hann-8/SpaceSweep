@@ -10,9 +10,9 @@ description: Scan local Windows drives for stale temporary files, app caches, cr
 ## 找垃圾
 
 1. 明确用户的范围和保留条件。「检查」和一般空间诊断走只读扫描。日常清理默认覆盖已挂载的所有本地数据卷，目标是尽量处理有证据的候选。用户主动给了容量目标时，按对应的盘核算。
-2. 执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--discover','--progress')`，保留返回的 `session_dir`。用户要求全盘仔细找或尽量找齐时，加 `--deep`，或用同一会话的 `Analyze -Arguments @('--path',$path,'--discover','--max-seconds','20')` 对相应盘补查。`--volume D:` 可限定单盘。
+2. 执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--discover','--progress')`，保留返回的 `session_dir`。默认快查覆盖系统来源、应用数据和各盘已登记的安装位置，并按应用路径清单补充缓存、日志和崩溃记录线索。用户要求逐盘遍历时加 `--deep`，或用同一会话的 `Analyze -Arguments @('--path',$path,'--discover','--max-seconds','20')` 定向补查。`--volume D:` 可限定单盘。
 3. **普通「帮我扫一下垃圾」发现黄色 `needs_review` 或绿色 `suspected` 时，默认在本轮扫描对话给出勾选入口。** 用返回的 `session_dir` 运行 `.\scripts\spacesweep.ps1 Review -SessionDir $session`，拿到 `waiting` 事件的 `url` 后，在进度消息里发 **勾选本轮发现** 链接和简短结论，保持同一进程等待提交、取消或过期。用户明确只要文字摘要或静态报告时，直接交付所需结果。
-4. 按 `review_level` 汇报各级的体积和主要项目。红色 `confirmed` 是已核验、清理对正常使用无已知影响的旧临时文件。黄色 `needs_review` 需确认重建开销、恢复或诊断需求。绿色 `suspected` 是用途或来源待核实的疑似垃圾。继续查有明显收益的线索，例如迁移的缓存和已结束的安装残留。
+4. 按 `review_level` 汇报各级体积，点出实际命中的主要软件及用途。红色 `confirmed` 是已核验、清理对正常使用无已知影响的旧临时文件。黄色 `needs_review` 需确认重建开销、恢复或诊断需求。绿色 `suspected` 是用途或来源待核实的线索，包括从应用路径清单发现的用量。继续查有明显收益的线索，例如迁移的缓存和已结束的安装残留。
 
 黄色审核先说明所属软件或系统、用途、清理影响和当前处理状态。用 `review.owner`、`review.feature`、`review.purpose` 的 ID 汇总同用途的多处发现。通常直接展示清理项，一个功能有不同取舍时才展开子项。按需查看位置和证据。
 
