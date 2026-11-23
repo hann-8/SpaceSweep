@@ -356,7 +356,7 @@ if ($discoveries.Count) {
     }
     $checks = @($discoveries.checks | Where-Object { $_ })
     if ($checks.Count) {
-        Add-Section '<details><summary>垃圾快查范围</summary><ul class="files">'
+        Add-Section '<details><summary>垃圾检查范围</summary><ul class="files">'
         foreach ($check in $checks) {
             $label = Escape-Html $check.label
             $location = Escape-Html $check.path
@@ -479,7 +479,7 @@ foreach ($item in $areas) {
     Add-Section '</details>'
 }
 if (!$areas.Count) {
-    Add-Section '<p>本轮为快查，具体覆盖见「垃圾快查范围」。逐目录占用排行随深查结果显示。</p>'
+    Add-Section '<p>具体覆盖见「垃圾检查范围」。逐目录占用排行随深查结果显示。</p>'
 }
 Add-Section '</section>'
 

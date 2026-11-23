@@ -39,11 +39,11 @@
 | 软件包缓存 | npm 的 `_cacache`，pip 的 HTTP 和 wheel 缓存。在当前用户默认缓存位置查找。 [npm](https://docs.npmjs.com/cli/cache/) · [pip](https://pip.pypa.io/en/stable/topics/caching/) |
 | 临时产物 | 递归找超过七天的 `.tmp`。记录安装格式或程序名含 Setup、Installer 的线索，以及旁边存在同名目录的压缩包。 |
 
-## 日常快查的应用覆盖
+## 跨机应用发现
 
-Rust 在当前用户 LocalAppData、Roaming AppData 和共享 ProgramData 的前 12 级目录寻找通用缓存结构。读取 Windows 当前用户和本机的 32 位、64 位卸载登记，从 `InstallLocation` 找到选定本地卷上的安装位置，在前 8 级目录寻找相同布局。缓存目录命中后按实际文件统计。跨盘或便携应用也能在逐盘深查时按结构识别。 [Windows 安装位置登记](https://learn.microsoft.com/en-us/windows/win32/msi/uninstall-registry-key) · [WebView2 用户数据目录](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder)
+日常深查在每个本地卷的目录遍历中识别通用缓存结构。Chromium 系缓存、Firefox `cache2` 和 npm `_cacache` 根据布局与索引或内容目录命中，适用于便携版、迁移目录和其他盘的位置。软件安装记录可以辅助定位，目录结构提供识别依据。本机用于实测，隔离样本涵盖自定义目录和不同缓存布局。 [WebView2 用户数据目录](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder)
 
-随版本发布的 [`application-probes.tsv`](../rules/application-probes.tsv) 包含 912 条从 Winapp2 提取的路径。仅取 Windows 已知目录下的明确缓存、日志和转储目录，保留每条顶层或递归的读取范围。Rust 对比已统计的目录，避免同一范围重复计入。规则路径匹配用于发掘线索，执行资格由 `windows.toml` 和 Rust 复核。日常扫描使用本地数据。 [Winapp2 数据快照](https://github.com/MoscaDotTo/Winapp2/blob/f967330a5cf0e701954fb51726e85722d0d36487/Winapp2.ini) · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+随版本发布的 [`application-probes.tsv`](../rules/application-probes.tsv) 包含从公开 Winapp2 固定快照提取的 912 条路径。生成规则面向 Windows 已知目录下的明确缓存、日志和转储目录，保留顶层或递归的读取范围。每台电脑按实际目录匹配，Rust 用已经统计的目录排除重叠。规则路径匹配用于发掘线索，执行资格由 `windows.toml` 和 Rust 复核。日常扫描使用本地数据。 [Winapp2 数据快照](https://github.com/MoscaDotTo/Winapp2/blob/f967330a5cf0e701954fb51726e85722d0d36487/Winapp2.ini) · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
 更新目录时，从目标上游提交取得原始 `Winapp2.ini`，生成同格式的只读路径清单后重新构建。
 

@@ -41,6 +41,13 @@ pub enum ReviewLevel {
 }
 
 impl Kind {
+    pub fn is_layout_cache(self) -> bool {
+        matches!(
+            self,
+            Self::BrowserCache | Self::BrowserCodeCache | Self::FirefoxCache | Self::NpmCache
+        )
+    }
+
     pub fn review_level(self) -> ReviewLevel {
         match self {
             Self::TempInstaller

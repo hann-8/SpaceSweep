@@ -463,18 +463,21 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                 &temp_candidates,
                 &result.rules,
             );
-            applications::discover(
-                discovery,
-                &result.volumes,
-                &control,
-                options.progress,
-                &mut covered,
-            )?;
+            if !deep {
+                applications::discover(
+                    discovery,
+                    &result.volumes,
+                    &control,
+                    options.progress,
+                    true,
+                    &covered,
+                )?;
+            }
             discovery.quick_elapsed_ms = Some(started.elapsed().as_millis() as u64);
         }
     }
     if deep {
-        let roots = focus.map_or_else(
+        let roots = focus.as_ref().map_or_else(
             || {
                 result
                     .volumes
@@ -485,7 +488,7 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
                     })
                     .collect()
             },
-            |focus| vec![focus],
+            |focus| vec![focus.clone()],
         );
         for root in roots {
             if control.stopped() {
@@ -506,6 +509,16 @@ pub fn run(options: Options, cancel: &AtomicBool) -> Result<Report> {
         }
     }
     if let Some(discovery) = &mut result.discovery {
+        if deep && focus.is_none() {
+            applications::discover(
+                discovery,
+                &result.volumes,
+                &control,
+                options.progress,
+                false,
+                &covered,
+            )?;
+        }
         crate::review::annotate(&mut discovery.findings);
         discovery.sort();
     }
@@ -767,16 +780,7 @@ fn analyze(
         report
             .findings
             .iter()
-            .filter(|finding| {
-                matches!(
-                    finding.kind,
-                    Kind::BrowserCache
-                        | Kind::BrowserCodeCache
-                        | Kind::FirefoxCache
-                        | Kind::NpmCache
-                        | Kind::ApplicationCacheClue
-                )
-            })
+            .filter(|finding| finding.kind.is_layout_cache())
             .filter_map(|finding| windows::locate(&finding.path, volumes))
             .collect::<Vec<_>>()
     });

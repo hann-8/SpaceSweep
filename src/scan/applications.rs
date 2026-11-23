@@ -114,7 +114,6 @@ fn find_layouts(
     control: &Control<'_>,
     report: &mut Report,
     accounted: &mut Vec<PathBuf>,
-    covered: &mut Vec<Location>,
 ) -> Check {
     let path = windows::view(base, volumes);
     if let Err(error) = windows::check_directory(base) {
@@ -152,7 +151,6 @@ fn find_layouts(
                             ));
                             stats.found += 1;
                             accounted.push(key);
-                            covered.push(root);
                         }
                     }
                     Err(_) => stats.skipped += 1,
@@ -220,25 +218,14 @@ fn find_layouts(
     )
 }
 
-pub(super) fn discover(
+fn discover_layouts(
     report: &mut Report,
     volumes: &[Volume],
     control: &Control<'_>,
     progress: bool,
-    covered: &mut Vec<Location>,
+    bases: &BTreeMap<&str, Location>,
+    accounted: &mut Vec<PathBuf>,
 ) -> Result<()> {
-    let bases: BTreeMap<_, _> = ANCHORS
-        .into_iter()
-        .filter_map(|(key, folder)| Some((key, windows::locate(&folder.known().ok()?, volumes)?)))
-        .collect();
-    let mut accounted: Vec<_> = covered.iter().map(path_key).collect();
-    accounted.extend(report.findings.iter().filter_map(|finding| {
-        (finding.kind == Kind::BrowserCache)
-            .then(|| windows::locate(&finding.path, volumes))
-            .flatten()
-            .as_ref()
-            .map(path_key)
-    }));
     let data_anchors = ["local", "roaming", "program_data"];
     for key in data_anchors {
         if control.stopped() {
@@ -251,15 +238,7 @@ pub(super) fn discover(
                     windows::view(base, volumes).display()
                 );
             }
-            let result = find_layouts(
-                base,
-                APPLICATION_DEPTH,
-                volumes,
-                control,
-                report,
-                &mut accounted,
-                covered,
-            );
+            let result = find_layouts(base, APPLICATION_DEPTH, volumes, control, report, accounted);
             report.checks.push(result);
         }
     }
@@ -307,13 +286,61 @@ pub(super) fn discover(
                 volumes,
                 control,
                 report,
-                &mut accounted,
-                covered,
+                accounted,
             );
             report.checks.push(result);
         }
     }
+    Ok(())
+}
 
+pub(super) fn discover(
+    report: &mut Report,
+    volumes: &[Volume],
+    control: &Control<'_>,
+    progress: bool,
+    search_application_dirs: bool,
+    covered: &[Location],
+) -> Result<()> {
+    if control.stopped() {
+        return Ok(());
+    }
+    let bases: BTreeMap<_, _> = ANCHORS
+        .into_iter()
+        .filter_map(|(key, folder)| Some((key, windows::locate(&folder.known().ok()?, volumes)?)))
+        .collect();
+    let mut accounted: Vec<_> = covered.iter().map(path_key).collect();
+    accounted.extend(report.findings.iter().filter_map(|finding| {
+        (finding.kind.is_layout_cache())
+            .then(|| windows::locate(&finding.path, volumes))
+            .flatten()
+            .as_ref()
+            .map(path_key)
+    }));
+    if search_application_dirs {
+        discover_layouts(report, volumes, control, progress, &bases, &mut accounted)?;
+    }
+    if progress {
+        eprintln!("Checking application catalog paths");
+    }
+    let counted_files: Vec<_> = report
+        .findings
+        .iter()
+        .filter(|finding| {
+            matches!(
+                finding.kind,
+                Kind::Minidump
+                    | Kind::DumpClue
+                    | Kind::OldTemp
+                    | Kind::TempInstaller
+                    | Kind::ArchiveWithDirectory
+            )
+        })
+        .filter_map(|finding| {
+            let parent = windows::locate(&finding.path, volumes)?;
+            Some((path_key(&parent), finding.files, finding.bytes))
+        })
+        .collect();
     let mut coverage = BTreeMap::<_, Coverage>::new();
     for row in PROBES
         .lines()
@@ -342,23 +369,29 @@ pub(super) fn discover(
             }
         };
         stats.skipped += output.totals.skipped.values().sum::<u64>();
-        if output.totals.files == 0 {
+        let mut files = output.totals.files;
+        let mut bytes = output.totals.logical_bytes;
+        // The directory can also contain individual artifacts already found by the deep scan.
+        for (parent, known_files, known_bytes) in &counted_files {
+            if parent == &key || probe.recursive && parent.starts_with(&key) {
+                files = files.saturating_sub(*known_files);
+                bytes = bytes.saturating_sub(*known_bytes);
+            }
+        }
+        if files == 0 {
             continue;
         }
         let mut finding = Finding::new(
             probe.kind,
             root.volume.clone(),
             windows::view(&root, volumes),
-            output.totals.files,
-            output.totals.logical_bytes,
+            files,
+            bytes,
         );
         finding.label = format!("{} · {}", probe.label, finding.label);
         report.findings.push(finding);
         stats.found += 1;
         accounted.push(key);
-        if probe.recursive {
-            covered.push(root);
-        }
     }
     for (key, stats) in coverage {
         report.checks.push(check(
@@ -399,17 +432,8 @@ mod tests {
         };
         let mut report = Report::default();
         let mut accounted = Vec::new();
-        let mut covered = Vec::new();
         for _ in 0..2 {
-            find_layouts(
-                &base,
-                2,
-                &volumes,
-                &control,
-                &mut report,
-                &mut accounted,
-                &mut covered,
-            );
+            find_layouts(&base, 2, &volumes, &control, &mut report, &mut accounted);
         }
         assert_eq!(report.findings.len(), 1);
         let finding = &report.findings[0];

@@ -26,7 +26,7 @@
 从 SpaceSweep 项目目录运行快查。在 BleachBit 便携版目录先列出选项，再分别运行共同来源、临时文件和额外应用缓存的预览。浏览器在线时记录两边实际读取的大小。
 
 ```powershell
-.\scripts\spacesweep.ps1 Scan -Arguments @('--discover')
+.\target\release\spacesweep.exe scan --discover
 .\bleachbit_console.exe --list-cleaners
 .\bleachbit_console.exe --preview windows_explorer.thumbnails system.memory_dump system.recycle_bin google_chrome.cache microsoft_edge.cache
 .\bleachbit_console.exe --preview system.tmp
@@ -59,3 +59,9 @@ C、D、E 三盘在同一条 `--discover --deep` 命令下复跑。去除项目�
 新增项目的用量来自实际文件大小。E 盘已检查登记位置，本轮无新增匹配。清理预览仍按已验证的 Rust 规则生成。
 
 三盘深查复跑用时 42.372 秒，在 55 秒的本轮上限内结束。三盘均有跳过项。扣除项目样本后，深查报告中有 45 组、296.66 MiB 未出现在上述快查记录。核对类别、级别及路径，报告内无重复组。14 项 Rust 测试通过。
+
+## 默认深查复测
+
+直接 `Scan` 及带 `--progress` 的 `Scan` 均遍历了 C、D、E 的可访问目录。两次引擎用时分别为 12.077 和 12.695 秒，报告标明跳过项，各有 27 组 Winapp2 路径线索。第二次列出的带进度用例与前一版深查按类别和路径比对，原有分组均可见。通用布局由逐盘遍历识别，避免额外再扫描一遍应用数据和安装目录。
+
+14 项 Rust 测试通过，其中自定义目录样本验证 Chromium 缓存、Firefox `cache2` 和 npm `_cacache` 可由结构识别。 [跨机应用发现](application-rules.md#跨机应用发现)

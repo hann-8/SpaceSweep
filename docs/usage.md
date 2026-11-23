@@ -8,20 +8,19 @@
 
 ## 命令行
 
-从仓库根执行。所有命令的结果是 JSON，`--progress` 的进度走标准错误。
+从仓库根执行。skill 的 `Scan` 默认启用 `--discover --deep`，逐盘遍历所有已挂载的本地数据卷。命令的结果是 JSON，`--progress` 的进度走标准错误。
 
 ```powershell
-.\target\release\spacesweep.exe scan --discover
+.\scripts\spacesweep.ps1 Scan -Arguments @('--progress')
+.\scripts\spacesweep.ps1 Scan -Arguments @('--volume','D:','--progress')
 .\target\release\spacesweep.exe scan --discover --deep --progress
-.\target\release\spacesweep.exe scan --progress
-.\target\release\spacesweep.exe scan --volume D:
 .\target\release\spacesweep.exe scan --path 'D:\待分析目录' --top 10
 .\target\release\spacesweep.exe scan --volume E: --deep --max-seconds 20
 ```
 
-`--discover` 逐盘查回收站、常见系统垃圾和临时产物，在应用数据及各盘登记的安装目录中识别 Chromium、Firefox、npm 缓存，并用 Winapp2 路径清单发现应用缓存、日志和崩溃记录线索。输出 `discovery.findings`，包含盘、路径、类别、条目数、大小、依据和 `review_level`。加 `--deep` 会继续逐盘遍历目录，识别散落的转储、临时产物和自定义位置的缓存。指定目录分析也会识别其范围内的这些项目。`discovery.quick_elapsed_ms` 记录快查用时，`elapsed_ms` 记录本次总耗时。 [应用发现范围](application-rules.md#日常快查的应用覆盖)
+`--discover --deep` 逐盘查回收站、常见系统垃圾和临时产物，同时在目录遍历中识别通用缓存布局和散落的转储。Winapp2 路径清单补充应用缓存、日志和崩溃记录线索。输出 `discovery.findings`，包含盘、路径、类别、条目数、大小、依据和 `review_level`。指定目录分析也会识别范围内的通用布局。`elapsed_ms` 记录整轮用时，`discovery.quick_elapsed_ms` 记录深查前的已知来源阶段。 [跨机应用发现](application-rules.md#跨机应用发现)
 
-快查的实际范围见 `discovery.checks`。目录分析按文件属性统计。使用 `--max-seconds` 可限制一轮扫描。到达时限时输出已经走到的范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
+实际扫描范围见各盘 `analysis` 和 `discovery.checks`。目录分析按文件属性统计。`--max-seconds` 可限制一轮扫描，达到时限时输出已检查范围，`stop_reason` 为 `time_limit`。目录排行按已读文件的逻辑大小汇总，有未读范围或跳过项时显示部分覆盖。实际删除试点覆盖当前用户的旧临时文件和已验证的 Chrome 网页磁盘缓存。 [已覆盖的规则](application-rules.md)
 
 有可预览项时，扫描返回 `scan_id`。将它填入预览命令。预览可按审核组、规则、盘或准确路径筛选，也可重复传入多个 `--scan`。
 
@@ -67,7 +66,7 @@
 这个命令先输出含 `url` 的 `waiting` 事件。提交后输出 `submitted` 事件及 `selection_file`、`scan_ids`、`include_groups`。选择记录留在本轮会话。需要继续选择时可再次打开审核页。
 
 ```powershell
-$scan = .\scripts\spacesweep.ps1 Scan -Arguments @('--discover') | ConvertFrom-Json
+$scan = .\scripts\spacesweep.ps1 Scan | ConvertFrom-Json
 $analysis = .\scripts\spacesweep.ps1 Analyze -SessionDir $scan.session_dir `
     -Arguments @('--path','D:\','--discover','--max-seconds','20') | ConvertFrom-Json
 $analysis.report_file

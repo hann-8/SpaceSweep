@@ -17,6 +17,8 @@ if (!(Test-Path -LiteralPath $engine -PathType Leaf)) {
 $stepName = $Step.ToLowerInvariant()
 $token = [guid]::NewGuid().ToString('N')
 if ($Step -eq 'Scan') {
+    $defaultArgs = @('--discover', '--deep') | Where-Object { $_ -notin $Arguments }
+    $Arguments = @($defaultArgs) + $Arguments
     $stateRoot = Join-Path $workspace '.spacesweep-state'
     [void][IO.Directory]::CreateDirectory($stateRoot)
     $storage = Get-Item -LiteralPath $stateRoot -Force
