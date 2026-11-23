@@ -32,7 +32,7 @@
 
 `--include-group` 选中对应软件、功能或用途下可处理的候选，可重复传入。`--exclude-group` 保留指定子组，排除优先。节点 ID 从所用扫描的 `discovery.findings[].review` 中读取，分别是 `owner.id`、`feature.id` 和 `purpose.id`。预览按实际纳入的候选列出用途、影响和预计占用。
 
-检查预览的分组和 `plan_file` 明细。想执行这份明确的永久删除计划时，在标准用户终端使用返回的 `plan_id`。
+检查预览的分组和 `plan_file` 明细。在对话里，Agent 问一次「同意清理吗？」。对当前预览明确回复「同意」或 `yes` 即可。手动执行时，在标准用户终端使用已确认的 `plan_id`。
 
 ```powershell
 .\target\release\spacesweep.exe apply '<plan_id>'
@@ -48,12 +48,13 @@
 - 扫描的 `matching_logical_bytes` 是匹配规则的文件长度。通过当前执行前置条件的数量为 `eligible_files`。Chrome 正在运行时仍可看到占用和阻塞原因。
 - 预览的 `allocated_bytes` 用于估算影响。系统条目、个人资料和待应用内处理项有各自的边界。
 - 执行后优先看 `deleted_files`、`outcomes`、各盘的 `available_change_bytes` 和本机 `receipt_file`。卷净变化包括同期的系统活动。 [卷容量接口](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdiskfreespaceexw)
+- 扫描和清理分别用各自的 `elapsed_ms` 记录 Rust 引擎用时。清理计时包括计划复核、删除、容量复测和写收据。命令总用时还包括进程启动和输出处理。
 
 ## 本地可视化报告
 
-项目 skill 通过 `scripts/spacesweep.ps1` 运行，各阶段都返回 `report_file`。用首轮返回的 `session_dir` 继续本轮检查。报告首屏显示红、黄、绿各级的条目数和大小，点对应卡片可以定位明细。
+项目 skill 通过 `scripts/spacesweep.ps1` 运行。扫描保存到项目目录的 `.spacesweep-state\session-<ID>`，位置由 `session_dir` 返回。目录中的 `report-scan-*.html` 供回看，`scan-output.json` 供审核页加载扫描结果。有清理候选时，Rust 还会保存绑定 `scan_id` 的快照，供生成准确的清理预览。扫描 HTML 的长期留存按回看和对比需要决定。
 
-黄色审核先按软件或系统归属展示，再显示可独立决定的清理项。同一功能中有不同用途时，可以展开按子项选择，例如网页资源与脚本缓存。每项说明用途、清理影响和当前可进预览的数量，多个目录的合计大小放在同一项下。想核对时展开位置和依据。可直接告诉 Agent「处理内置网页缓存，保留脚本缓存」。预览和执行阶段分别加上本轮计划和复测数据。
+报告首屏显示红、黄、绿各级的条目数和大小，点卡片可定位明细。黄色审核先按软件或系统归属展示，再显示可独立决定的清理项。同一功能中有不同用途时，可以展开按子项选择，例如网页资源与脚本缓存。每项说明用途、清理影响和当前可进预览的数量，多个目录的合计大小放在同一项下。想核对时展开位置和依据。可直接告诉 Agent「处理内置网页缓存，保留脚本缓存」。清理预览页加上本轮计划和各组预计占用。
 
 ### 在报告里勾选
 
@@ -72,9 +73,9 @@ $analysis = .\scripts\spacesweep.ps1 Analyze -SessionDir $scan.session_dir `
 $analysis.report_file
 ```
 
-生成预览时用 `Plan -SessionDir $scan.session_dir -Arguments @('--scan',$scan.scan_id)`。确认后用同一会话的 `Apply` 传具体计划 ID。结果 JSON 会保留原生命令的字段、源数据文件和报告链接。
+生成预览时用 `Plan -SessionDir $scan.session_dir -Arguments @('--scan',$scan.scan_id)`。确认后用同一会话的 `Apply` 传具体计划 ID。清理结果在对话中汇报，JSON 结果和逐项收据存到同一目录。
 
-也可以用已有的原生命令 JSON 导出报告。多份目录分析通过 `-AnalysisJson` 数组传入。计划和执行输入分别使用 `plan` 和 `apply` 的标准输出 JSON。
+也可以用已有的原生命令 JSON 导出扫描报告。多份目录分析通过 `-AnalysisJson` 数组传入，可用 `-PlanJson` 附加 `plan` 的清理预览。
 
 ```powershell
 .\target\release\spacesweep.exe scan | Set-Content .spacesweep-state\scan.json -Encoding UTF8
@@ -84,4 +85,4 @@ $analysis.report_file
     -AnalysisJson .spacesweep-state\disk-D.json -OutputPath .spacesweep-state\report.html
 ```
 
-可选的 `-PlanJson` 和 `-ApplyJson` 会显示清理估算、各盘实际变化和处理结果。HTML 可直接用浏览器打开，支持展开目录、最大文件和覆盖信息。输出使用新文件名。
+HTML 可直接用浏览器打开，支持展开目录、最大文件和覆盖信息。输出使用新文件名。

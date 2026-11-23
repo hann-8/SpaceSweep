@@ -76,21 +76,17 @@ try {
     $sourcePath = Join-Path $SessionDir $filename
     [IO.File]::WriteAllText($sourcePath, $raw, [Text.UTF8Encoding]::new($false))
 
-    $reportArgs = @{
-        ScanJson = Join-Path $SessionDir 'scan-output.json'
-        AnalysisJson = @(Get-AnalysisSources)
-        OutputPath = Join-Path $SessionDir "report-$stepName-$token.html"
+    if ($Step -ne 'Apply') {
+        $reportArgs = @{
+            ScanJson = Join-Path $SessionDir 'scan-output.json'
+            AnalysisJson = @(Get-AnalysisSources)
+            OutputPath = Join-Path $SessionDir "report-$stepName-$token.html"
+        }
+        if ($Step -eq 'Plan') {
+            $reportArgs.PlanJson = $sourcePath
+        }
+        $reportPath = & (Join-Path $PSScriptRoot 'report.ps1') @reportArgs
     }
-    if ($Step -eq 'Plan') {
-        $reportArgs.PlanJson = $sourcePath
-    }
-    if ($Step -eq 'Apply') {
-        $reportArgs.ApplyJson = $sourcePath
-        $preview = Get-ChildItem -LiteralPath $SessionDir -Filter "preview-$($result.plan_id)-*.json" -File |
-            Sort-Object LastWriteTimeUtc, Name | Select-Object -Last 1
-        if ($preview) { $reportArgs.PlanJson = $preview.FullName }
-    }
-    $reportPath = & (Join-Path $PSScriptRoot 'report.ps1') @reportArgs
 }
 catch {
     # Preserve the engine result, especially after an apply that has already completed.

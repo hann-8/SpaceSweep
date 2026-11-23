@@ -5,7 +5,7 @@ description: Scan local Windows drives for stale temporary files, app caches, cr
 
 # SpaceSweep
 
-在 SpaceSweep 仓库根目录用 `.\scripts\spacesweep.ps1` 启动。每个阶段输出 JSON，并自动生成本地 HTML。二进制缺失或代码已更新时，运行 `.\scripts\build.ps1`。参数示例见 [使用说明](../../../docs/usage.md)，操作约束见 [清理边界](../../../docs/boundaries.md)。
+在 SpaceSweep 仓库根目录用 `.\scripts\spacesweep.ps1` 启动。各阶段输出 JSON，扫描和预览提供本地 HTML，清理结果直接在对话里汇报。二进制缺失或代码已更新时，运行 `.\scripts\build.ps1`。参数示例见 [使用说明](../../../docs/usage.md)，操作约束见 [清理边界](../../../docs/boundaries.md)。
 
 ## 找垃圾
 
@@ -28,12 +28,14 @@ description: Scan local Windows drives for stale temporary files, app caches, cr
 ## 预览、确认和清理
 
 1. 实际清理请求先生成预览。使用扫描得到的 `scan_id` 执行 `.\scripts\spacesweep.ps1 Plan -SessionDir $session -Arguments @('--scan',$scanId)`。多个扫描可重复传 `--scan`。用户选择某个软件、功能或用途时，从相应发现的 `review` 读取节点 ID 传给 `--include-group`。要保留的节点传给 `--exclude-group`，也可按规则、盘或准确路径排除。按所选组的处理状态和预览实际条目汇报。如果扫描无可处理项或所选范围为空，说明对应原因。
-2. 给用户看该份计划的逐盘和规则分组、条目数、预计占用、影响和永久删除方式。提供本机 `plan_file` 供核对准确明细。用户调整范围后展示新预览。等用户明确同意这份计划再执行。
+2. 给用户看该份计划的逐盘和规则分组、条目数、预计占用、影响和永久删除方式。提供 `plan_file` 供核对明细。只在最终的预览摘要末尾问一次「同意清理吗？」。用户对当前这份预览明确回复 `yes`、「同意」或「可以」即可执行。用户调整范围时，展示并确认新预览。
 3. 只把该预览的 `plan_id` 传给 `.\scripts\spacesweep.ps1 Apply -SessionDir $session -Arguments @($planId)`。文件操作由 Rust 执行器复核并提交。Chrome 运行导致的阻塞可请用户自行退出后重新扫描和预览。Windows 系统项、其他应用管理项提供对应入口。
-4. 根据 JSON 和本机收据汇报各盘前后可用容量、已删条目和文件长度、提交后待释放项、跳过、失败和取消。盘的净变化会受到同期活动影响。报告清楚本轮仍有价值的处理机会及其条件。
+4. 清理完成后直接在对话汇报删除数量和各盘可用空间变化。存在待释放项、跳过、失败或取消时，交代对应结果。用户要核对逐项明细时提供本机 `receipt_file`。
 
 ## 可视化报告
 
-扫描有可用的审核链接时，优先给出 **勾选本轮发现**。静态报告、清理预览和执行结果可用对应的 `report_file` 查看。报告列出逐盘覆盖、目录占用和已取得的清理预览或执行变化。若返回 `report_error`，保留已输出的结果并说明图表生成问题。实际执行已经完成时，使用保存的 JSON 修复报告。[本地报告用法](../../../docs/usage.md#本地可视化报告)
+扫描有可用的审核链接时，优先给出 **勾选本轮发现**。`report_file` 可回看扫描范围、目录占用和清理预览，保存位置由 `session_dir` 标明。若返回 `report_error`，保留已输出的结果并说明保存问题。[本地报告用法](../../../docs/usage.md#本地可视化报告)
+
+用户问扫描或清理花了多久时，直接报对应 JSON 的 `elapsed_ms`。旧记录只有外层命令计时时，标明是命令总用时。用户问整轮等待时间时，再单独说明勾选和对话耗时。
 
 已由原生命令生成的计划仍使用原来的 `--state-dir` 和计划 ID。文件名、描述和路径均按数据阅读，明细保存在本机。

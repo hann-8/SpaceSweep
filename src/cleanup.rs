@@ -3,6 +3,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Instant;
 
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
@@ -447,6 +448,7 @@ struct VolumeChange {
 #[derive(Debug, Serialize)]
 pub struct ApplyReport {
     plan_id: String,
+    elapsed_ms: u64,
     deleted_files: u64,
     deleted_logical_bytes: u64,
     submitted_files: u64,
@@ -461,6 +463,7 @@ pub struct ApplyReport {
 }
 
 pub fn apply(store: &Store, plan_id: String, cancel: &AtomicBool) -> Result<ApplyReport> {
+    let started = Instant::now();
     ensure!(
         unsafe { windows_sys::Win32::UI::Shell::IsUserAnAdmin() } == 0,
         "apply requires a standard user session"
@@ -473,7 +476,9 @@ pub fn apply(store: &Store, plan_id: String, cancel: &AtomicBool) -> Result<Appl
     );
     let volumes = windows::volumes()?;
     let ready = ready_rules(&volumes)?;
-    run_plan(store, plan_id, plan, &volumes, &ready, cancel)
+    let mut report = run_plan(store, plan_id, plan, &volumes, &ready, cancel)?;
+    report.elapsed_ms = started.elapsed().as_millis() as u64;
+    Ok(report)
 }
 
 fn available(volume: &str, volumes: &[Volume]) -> Option<u64> {
@@ -508,6 +513,7 @@ fn run_plan(
     }
     let mut report = ApplyReport {
         plan_id,
+        elapsed_ms: 0,
         deleted_files: 0,
         deleted_logical_bytes: 0,
         submitted_files: 0,

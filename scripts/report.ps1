@@ -3,7 +3,6 @@ param(
     [Parameter(Mandatory)][string]$ScanJson,
     [string[]]$AnalysisJson = @(),
     [string]$PlanJson,
-    [string]$ApplyJson,
     [string]$SelectionManifest,
     [Parameter(Mandatory)][string]$OutputPath
 )
@@ -185,10 +184,6 @@ if ($null -eq $scan.schema_version -or $null -eq $scan.volumes) {
     throw 'ScanJson must be the JSON output of the SpaceSweep scan command.'
 }
 $plan = if ($PlanJson) { Read-ReportData $PlanJson }
-$applied = if ($ApplyJson) { Read-ReportData $ApplyJson }
-if ($plan -and $applied -and $plan.plan_id -ne $applied.plan_id) {
-    throw 'PlanJson and ApplyJson refer to different plans.'
-}
 $analyses = @(
     $scan
     foreach ($inputPath in $AnalysisJson) { Read-ReportData $inputPath }
@@ -412,8 +407,7 @@ if ($plan) {
     $estimate = ($plan.groups | Measure-Object -Property allocated_bytes -Sum).Sum
     $count = Format-Count $plan.files
     $saved = Format-Bytes ([double]$estimate)
-    $stage = if ($applied) { '执行前的估算。' } else { '本报告为只读预览。实际执行需要确认计划。' }
-    Add-Section "<p class='summary'>$count 项，预计 $saved</p><p class='muted'>$stage</p>"
+    Add-Section "<p class='summary'>$count 项，预计 $saved</p><p class='muted'>确认计划后可执行清理。</p>"
     if ($plan.include_groups) { Add-Section "<p>选择 $(Escape-Html ($plan.include_groups.label -join '、'))</p>" }
     if ($plan.exclude_groups) { Add-Section "<p>保留 $(Escape-Html ($plan.exclude_groups.label -join '、'))</p>" }
     if ($plan.groups) {
@@ -436,34 +430,10 @@ if ($plan) {
         Add-Section '<p><small>此计划使用永久删除。完整条目以本机计划文件为准。</small></p>'
     }
 }
-elseif ($applied) {
-    Add-Section '<p>本次处理见下方清理结果。</p>'
-}
 else {
     Add-Section '<p>本报告仅包含扫描数据。已知位置会标出符合预览条件的数量。</p>'
 }
 Add-Section '</div></section>'
-
-if ($applied) {
-    Add-Section '<section id="result"><h2>清理结果</h2><div class="panel">'
-    $removed = Format-Count $applied.deleted_files
-    $size = Format-Bytes $applied.deleted_logical_bytes
-    $skipped = Format-Count $applied.skipped_files
-    $failed = Format-Count $applied.failed_files
-    $pending = Format-Count $applied.submitted_files
-    $unattempted = Format-Count $applied.unattempted_files
-    Add-Section "<p class='summary'>已删除 $removed 项 · 文件大小 $size</p>"
-    Add-Section "<p>跳过 $skipped · 失败 $failed · 待释放 $pending · 未处理 $unattempted</p>"
-    Add-Section '<div class="table-wrap"><table><thead><tr><th>磁盘</th><th>执行前可用</th><th>执行后可用</th><th>可用空间净变化</th></tr></thead><tbody>'
-    foreach ($volume in $applied.volumes) {
-        $name = Escape-Html $volume.mount
-        $before = Format-Bytes $volume.available_before
-        $after = Format-Bytes $volume.available_after
-        $delta = Format-Bytes $volume.available_change_bytes
-        Add-Section "<tr><td>$name</td><td>$before</td><td>$after</td><td>$delta</td></tr>"
-    }
-    Add-Section '</tbody></table></div><small class="muted">卷的净变化也会反映同期的系统活动。</small></div></section>'
-}
 
 Add-Section '<section id="directories"><h2>目录占用排行</h2><p class="muted">按已读取文件的逻辑大小汇总。目录大小反映占用，清理资格以预览为准。</p>'
 foreach ($item in $areas) {
