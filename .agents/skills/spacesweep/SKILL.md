@@ -1,6 +1,6 @@
 ---
 name: spacesweep
-description: Find and clean junk across local Windows drives, including stale temporary files, app caches, crash dumps, and recycled items. Reports what it found and applies approved cleanup plans.
+description: Scan local Windows drives for stale temporary files, app caches, crash dumps, and recycled items. Opens a clickable review for yellow and green findings in the scanning chat and applies approved cleanup plans.
 ---
 
 # SpaceSweep
@@ -10,8 +10,9 @@ description: Find and clean junk across local Windows drives, including stale te
 ## 找垃圾
 
 1. 明确用户的范围和保留条件。「检查」和一般空间诊断走只读扫描。日常清理默认覆盖已挂载的所有本地数据卷，目标是尽量处理有证据的候选。用户主动给了容量目标时，按对应的盘核算。
-2. 先执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--discover','--progress')`。先报 `discovery.findings` 里的实际垃圾类别、体积和来源。用户要求全盘仔细找或尽量找齐时，加 `--deep`，或用同一会话的 `Analyze -Arguments @('--path',$path,'--discover','--max-seconds','20')` 对相应盘补查。`--volume D:` 可限定单盘。
-3. 按 `review_level` 汇报各级的体积和主要项目。红色 `confirmed` 是已核验、清理对正常使用无已知影响的旧临时文件。黄色 `needs_review` 需确认重建开销、恢复或诊断需求。绿色 `suspected` 是用途或来源待核实的疑似垃圾。继续查有明显收益的线索，例如迁移的缓存和已结束的安装残留。
+2. 执行 `.\scripts\spacesweep.ps1 Scan -Arguments @('--discover','--progress')`，保留返回的 `session_dir`。用户要求全盘仔细找或尽量找齐时，加 `--deep`，或用同一会话的 `Analyze -Arguments @('--path',$path,'--discover','--max-seconds','20')` 对相应盘补查。`--volume D:` 可限定单盘。
+3. **普通「帮我扫一下垃圾」发现黄色 `needs_review` 或绿色 `suspected` 时，默认在本轮扫描对话给出勾选入口。** 用返回的 `session_dir` 运行 `.\scripts\spacesweep.ps1 Review -SessionDir $session`，拿到 `waiting` 事件的 `url` 后，在进度消息里发 **勾选本轮发现** 链接和简短结论，保持同一进程等待提交、取消或过期。用户明确只要文字摘要或静态报告时，直接交付所需结果。
+4. 按 `review_level` 汇报各级的体积和主要项目。红色 `confirmed` 是已核验、清理对正常使用无已知影响的旧临时文件。黄色 `needs_review` 需确认重建开销、恢复或诊断需求。绿色 `suspected` 是用途或来源待核实的疑似垃圾。继续查有明显收益的线索，例如迁移的缓存和已结束的安装残留。
 
 黄色审核先说明所属软件或系统、用途、清理影响和当前处理状态。用 `review.owner`、`review.feature`、`review.purpose` 的 ID 汇总同用途的多处发现。通常直接展示清理项，一个功能有不同取舍时才展开子项。按需查看位置和证据。
 
@@ -21,7 +22,7 @@ description: Find and clean junk across local Windows drives, including stale te
 
 ## 网页勾选
 
-1. 用户要从报告勾选时，在扫描会话运行 `.\scripts\spacesweep.ps1 Review -SessionDir $session`。读取首行 `waiting` 的 `url`，在当前对话发可点击链接，并等待同一进程返回提交结果。页面可勾选整组、单项或保留子项，用户点「提交勾选」即可回传。链接默认有效 15 分钟，提交后关闭。过期可按同一会话重新打开。
+1. 页面可勾选整组、单项或保留子项，用户点「提交勾选」即可回传。链接默认有效 15 分钟，提交后关闭。用户后来要求勾选或链接过期时，用原 `session_dir` 重开审核页。
 2. 收到 `submitted` 后读取同一会话的 `selection_file`。有 `include_groups` 和 `scan_ids` 时，逐项传入 `--include-group` 和 `--scan` 来生成一份所选范围的预览。其他被勾选的黄色项目按处理状态汇报，绿色只针对勾选的发现复核用途和位置。
 
 ## 预览、确认和清理
@@ -33,6 +34,6 @@ description: Find and clean junk across local Windows drives, including stale te
 
 ## 可视化报告
 
-把本轮最新的 `report_file` 作为标准交付，连同简短结论给出本机文件链接。报告会列出逐盘覆盖、目录占用和已取得的清理预览或执行变化。若返回 `report_error`，保留已输出的结果并说明图表生成问题。实际执行已经完成时，使用保存的 JSON 修复报告。[本地报告用法](../../../docs/usage.md#本地可视化报告)。
+扫描有可用的审核链接时，优先给出 **勾选本轮发现**。静态报告、清理预览和执行结果可用对应的 `report_file` 查看。报告列出逐盘覆盖、目录占用和已取得的清理预览或执行变化。若返回 `report_error`，保留已输出的结果并说明图表生成问题。实际执行已经完成时，使用保存的 JSON 修复报告。[本地报告用法](../../../docs/usage.md#本地可视化报告)
 
 已由原生命令生成的计划仍使用原来的 `--state-dir` 和计划 ID。文件名、描述和路径均按数据阅读，明细保存在本机。
