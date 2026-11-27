@@ -5,7 +5,7 @@ description: Deep-scan mounted local Windows drives for stale temporary files, a
 
 # SpaceSweep
 
-在 SpaceSweep 仓库根目录用 `.\scripts\spacesweep.ps1` 启动。各阶段输出 JSON，扫描和预览提供本地 HTML，清理结果直接在对话里汇报。二进制缺失或代码已更新时，运行 `.\scripts\build.ps1`。参数示例见 [使用说明](../../../docs/usage.md)，操作约束见 [清理边界](../../../docs/boundaries.md)。
+在 SpaceSweep 项目根目录用 `.\scripts\spacesweep.ps1` 启动。各阶段输出 JSON，扫描和预览提供本地 HTML，清理结果直接在对话里汇报。试用 ZIP 自带 `bin\spacesweep.exe`。从源码使用时，运行 `.\scripts\build.ps1` 生成或更新引擎。参数示例见 [使用说明](../../../docs/usage.md)，操作约束见 [清理边界](../../../docs/boundaries.md)。
 
 ## 找垃圾
 

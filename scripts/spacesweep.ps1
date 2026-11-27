@@ -9,9 +9,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path -Parent $PSScriptRoot
-$engine = Join-Path $workspace 'target\release\spacesweep.exe'
+$engine = Join-Path $workspace 'bin\spacesweep.exe'
 if (!(Test-Path -LiteralPath $engine -PathType Leaf)) {
-    throw 'Build SpaceSweep with scripts/build.ps1 before running a session.'
+    $engine = Join-Path $workspace 'target\release\spacesweep.exe'
+    if (!(Test-Path -LiteralPath $engine -PathType Leaf)) {
+        throw 'SpaceSweep is missing. Extract the complete release ZIP or build the source with scripts/build.ps1.'
+    }
 }
 
 $stepName = $Step.ToLowerInvariant()
@@ -42,6 +45,18 @@ function Get-AnalysisSources {
         Select-Object -ExpandProperty FullName
 }
 
+function Invoke-Engine([string[]]$EngineArgs) {
+    $previousEncoding = [Console]::OutputEncoding
+    try {
+        [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+        & $engine @EngineArgs
+        if ($LASTEXITCODE -ne 0) { throw "SpaceSweep $Step failed (exit $LASTEXITCODE)." }
+    }
+    finally {
+        [Console]::OutputEncoding = $previousEncoding
+    }
+}
+
 if ($Step -eq 'Review') {
     $manifest = Join-Path $SessionDir "review-$token.json"
     $reportArgs = @{
@@ -51,8 +66,7 @@ if ($Step -eq 'Review') {
         OutputPath = Join-Path $SessionDir "report-review-$token.html"
     }
     $report = & (Join-Path $PSScriptRoot 'report.ps1') @reportArgs
-    & $engine --state-dir $SessionDir review --report $report --manifest $manifest @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "SpaceSweep review failed (exit $LASTEXITCODE)." }
+    Invoke-Engine (@('--state-dir', $SessionDir, 'review', '--report', $report, '--manifest', $manifest) + $Arguments)
     return
 }
 
@@ -61,8 +75,7 @@ if ($Step -eq 'Apply' -and ($Arguments.Count -ne 1 -or $Arguments[0] -cnotmatch 
 }
 $command = if ($Step -eq 'Analyze') { 'scan' } else { $stepName }
 $engineArgs = @('--state-dir', $SessionDir, $command) + $Arguments
-$raw = & $engine @engineArgs | Out-String
-if ($LASTEXITCODE -ne 0) { throw "SpaceSweep $command failed (exit $LASTEXITCODE)." }
+$raw = Invoke-Engine $engineArgs | Out-String
 $result = $raw | ConvertFrom-Json
 
 $reportPath = $null
@@ -72,8 +85,8 @@ try {
     $filename = switch ($Step) {
         'Scan' { 'scan-output.json' }
         'Analyze' { "analysis-$token.json" }
-        'Plan' { "preview-$($result.plan_id)-$token.json" }
-        'Apply' { "result-$($result.plan_id)-$token.json" }
+        'Plan' { "preview-$token.json" }
+        'Apply' { "result-$token.json" }
     }
     $sourcePath = Join-Path $SessionDir $filename
     [IO.File]::WriteAllText($sourcePath, $raw, [Text.UTF8Encoding]::new($false))

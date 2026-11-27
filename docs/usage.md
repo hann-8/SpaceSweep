@@ -2,13 +2,17 @@
 
 ## 在项目里使用 skill
 
-在 Windows 上，从 SpaceSweep 项目会话发起「用 SpaceSweep 检查所有盘」或「用 SpaceSweep 把能清的都列出来」。也可以显式选 `$spacesweep`。仓库内的入口是 [SpaceSweep skill](../.agents/skills/spacesweep/SKILL.md)。 [OpenAI Docs 的项目 skill 位置](https://developers.openai.com/api/reference/cli)
+在 Windows 上，从 SpaceSweep 项目会话发起「用 SpaceSweep 检查所有盘」或「用 SpaceSweep 把能清的都列出来」。也可以显式选 `$spacesweep`。仓库和试用包使用同一个 [SpaceSweep skill](../.agents/skills/spacesweep/SKILL.md)。 [OpenAI Docs 的项目 skill 位置](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills)
 
-已构建的程序在 `target/release/spacesweep.exe`。重新构建时，在仓库根运行 `.\scripts\build.ps1`。本脚本使用当前机器已有的 Cargo，或使用已经放进 `.spacesweep-dev` 的本地工具链。Windows GNU 工具链需能找到其 `dlltool` 和汇编器。 [Rust 的 dlltool 说明](https://doc.rust-lang.org/rustc/codegen-options/index.html#dlltool)
+试用 ZIP 的程序在 `bin/spacesweep.exe`。源码构建的程序默认在 `target/release/spacesweep.exe`。重新构建时，在源码仓库根运行 `.\scripts\build.ps1`。本脚本使用当前机器已有的 Cargo，或使用已经放进 `.spacesweep-dev` 的本地工具链。Windows GNU 工具链需能找到其 `dlltool` 和汇编器。 [Rust 的 dlltool 说明](https://doc.rust-lang.org/rustc/codegen-options/index.html#dlltool)
+
+## 从源码打包
+
+在 Windows x64 上，从源码仓库根运行 `.\scripts\dist.ps1`。脚本用锁定的依赖构建，并在 `dist/` 生成 `SpaceSweep-<版本>-windows-x64.zip` 和对应的 `.sha256` 校验文件。试用者解压后即可从 [快速上手](../README.md) 开始。ZIP 和校验文件由打包脚本生成，可作为发布附件上传。
 
 ## 命令行
 
-从仓库根执行。skill 的 `Scan` 默认启用 `--discover --deep`，逐盘遍历所有已挂载的本地数据卷。命令的结果是 JSON，`--progress` 的进度走标准错误。
+从项目根执行。在试用包内使用原生命令时，把示例中的 `.\target\release\spacesweep.exe` 换成 `.\bin\spacesweep.exe`。skill 的 `Scan` 默认启用 `--discover --deep`，逐盘遍历所有已挂载的本地数据卷。命令的结果是 JSON，`--progress` 的进度走标准错误。
 
 ```powershell
 .\scripts\spacesweep.ps1 Scan -Arguments @('--progress')
